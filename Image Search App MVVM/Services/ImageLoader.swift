@@ -27,6 +27,21 @@ final class ImageCache {
             cache.setObject(image, forKey: url as NSURL)
     }
     
+    
+    func loadImage(from url: URL, completion: @escaping (UIImage?)->Void){
+        //cells and view models never touch url session directly
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 //    func appendCompletion(_ completion: @escaping (UIImage?) -> Void, for url: URL)-> Bool{
 //       // queue.sync{
 //            if var existing = loadingResponses[url]{
