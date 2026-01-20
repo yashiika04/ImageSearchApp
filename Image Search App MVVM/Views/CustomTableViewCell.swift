@@ -112,7 +112,7 @@ class CustomTableViewCell: UITableViewCell {
             
         ImageLoader.shared.loadImage(from: viewModel.url) { [weak self] image, url in
             guard let self else {return}
-            if self.viewModel?.imageInfo.largeImageURL == url {
+            if self.viewModel?.imageInfo.previewURL == url {
                 self.loader.stopAnimating()
                 self.myImageView.image = image
             }

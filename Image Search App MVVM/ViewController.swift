@@ -10,12 +10,14 @@ import UIKit
 class ViewController: UIViewController {
     
     let tableView  = UITableView()
-
     let viewModel = ImageListViewModel()
+    
+    private let searchController = UISearchController(searchResultsController: nil)
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setUp()
+        setUpSearchController()
         
         // 1. Bind ViewModel to ViewController
         viewModel.onDataUpdated = { [weak self] in
@@ -34,8 +36,6 @@ class ViewController: UIViewController {
     private func setUp(){
         view.addSubview(tableView)
         
-//        tableView.backgroundColor = .red
-        
         tableView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -50,6 +50,21 @@ class ViewController: UIViewController {
         
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 100
+    }
+    
+    //set-up search controller
+    private func setUpSearchController(){
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Images"
+        searchController.searchBar.searchTextField.textColor = .white
+        searchController.searchBar.searchTextField.backgroundColor = .secondarySystemBackground
+        
+        searchController.searchBar.delegate = self
+        
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+        
+        definesPresentationContext = true
     }
     
     //set-up footer
@@ -108,10 +123,23 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
             viewModel.fetchImageData()
         }
     }
-    
-//    func tableView(_ tableView: UITableView,
-//               heightForRowAt indexPath: IndexPath) -> CGFloat {
-//       
-//        return 100
-//    }
+}
+extension ViewController: UISearchBarDelegate{
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar){
+        //get text
+        guard
+            let query = searchBar.text,
+            !query.trimmingCharacters(in: .whitespaces).isEmpty
+        else{
+            return
+        }
+        //dismiss keyboard
+        searchBar.resignFirstResponder()
+        //tell view model to start search
+        viewModel.search(query)
+    }
+}
+
+#Preview{
+    ViewController()
 }

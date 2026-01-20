@@ -16,6 +16,9 @@ class ImageListViewModel {
     private var isFetching: Bool = false
     private var hasMoreData: Bool = true
     
+    //query
+    private var currentQuery: String = "yellow flowers" //default
+    
     //notify the view controller when data changes
     var onDataUpdated: (()-> Void)?
     //notify the state change
@@ -31,8 +34,16 @@ class ImageListViewModel {
         isFetching = true
         onLoadingStateChanged?(true)
         
-        guard let url = URL(string: "https://pixabay.com/api/?key=45834665-cd812607af12ca3f1bd5d4c19&q=yellow+flowers&image_type=photo&pretty=true&safesearch=true&per_page=50&page=\(currentPage)")
-        else{
+        
+        let encodedQuery = currentQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+
+        let urlString = """
+        https://pixabay.com/api/?key=45834665-cd812607af12ca3f1bd5d4c19&q=\(encodedQuery)&image_type=photo&pretty=true&safesearch=true&per_page=50&page=\(currentPage)
+        """
+
+        guard
+            let url = URL(string: urlString)
+        else {
             isFetching = false
             onLoadingStateChanged?(false)
             return
@@ -96,6 +107,26 @@ class ImageListViewModel {
             }
             
         }.resume()
+    }
+    
+    //query logic
+    func search(_ query: String) {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return
+        }
+        
+        currentQuery = trimmed
+        
+        currentPage = 1
+        hasMoreData = true
+        isFetching = false
+        
+        imageData.removeAll()
+        onDataUpdated?()
+        
+        fetchImageData()
+        
     }
     
     //return rows in imageData

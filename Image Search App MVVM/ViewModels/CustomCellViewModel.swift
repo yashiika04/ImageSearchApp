@@ -26,26 +26,10 @@ class CustomCellViewModel{
     
     init(imageInfo: ImageInfo) {
        self.imageInfo = imageInfo
-       //self.url = imageInfo.previewURL
-       self.url = imageInfo.largeImageURL
+       self.url = imageInfo.previewURL
+       //self.url = imageInfo.largeImageURL
     }
     
-//    func fetchImage(completion: @escaping (UIImage?)->Void){
-//      
-//        
-//        ImageLoader.shared.loadImage(from: url) { [weak self] image, url in
-//            guard let self else {return}
-//            
-//            
-//            
-//            completion(image)
-//
-//        }
-//    }
-    
-    func cancel(){
-        requestID = UUID()
-    }
     
 }
 
