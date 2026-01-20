@@ -37,13 +37,9 @@ class ImageListViewModel {
             onLoadingStateChanged?(false)
             return
         }
-        
-        //api call
+    
         URLSession.shared.dataTask(with: url){ data, response, error in
-            
-//          self.isFetching = false -> updating via background thread
-
-            
+         
             if let error {
                 print("encountered an error: ", error)
                 DispatchQueue.main.async{
@@ -66,21 +62,16 @@ class ImageListViewModel {
                 let httpResponse = response as? HTTPURLResponse,
                 200..<300 ~= httpResponse.statusCode
             else {
-                print("Server error:", response ?? "")
+                DispatchQueue.main.sync{
+                    self.hasMoreData = false
+                    self.onLoadingStateChanged?(false)
+                }
                 return
             }
             
-            //decode json
             do{
                 let response = try JSONDecoder().decode(ImageApiResponse.self, from: data)
                 let images = response.hits
-               
-//                if images.isEmpty {
-//                    self.hasMoreData = false
-//                }else{
-//                    self.imageData.append(contentsOf: images)
-//                    self.currentPage += 1
-//                }
                 
                 //dispatch queue notify on main thread
                 DispatchQueue.main.async{

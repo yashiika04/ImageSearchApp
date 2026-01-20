@@ -19,9 +19,11 @@ class CustomTableViewCell: UITableViewCell {
         return iv
     }()
 
-    private var decpLabel: UILabel = {
+    private var descriptionLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 17, weight: .medium)
+        label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
         return label
     }()
    
@@ -61,6 +63,7 @@ class CustomTableViewCell: UITableViewCell {
   
     override func prepareForReuse(){
         super.prepareForReuse( )
+
         myImageView.image = nil
         loader.startAnimating() // reset on reuse
         
@@ -68,7 +71,7 @@ class CustomTableViewCell: UITableViewCell {
     
  
     private func setupUI(){
-        labelsStackView.addArrangedSubview(decpLabel)
+        labelsStackView.addArrangedSubview(descriptionLabel)
         labelsStackView.addArrangedSubview(likesLabel)
         
         self.contentView.addSubview(myImageView)
@@ -80,17 +83,16 @@ class CustomTableViewCell: UITableViewCell {
         labelsStackView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-//            myImageView.topAnchor.constraint(equalTo: self.contentView.topAnchor),
-//            myImageView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor),
             myImageView.leadingAnchor.constraint(equalTo: self.contentView.leadingAnchor, constant: 16),
             myImageView.centerYAnchor.constraint(equalTo: self.contentView.centerYAnchor),
-//            myImageView.trailingAnchor.constraint(equalTo: self.contentView.trailingAnchor),
             myImageView.widthAnchor.constraint(equalToConstant: 100),
             myImageView.heightAnchor.constraint(equalToConstant: 100),
             
+            labelsStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            labelsStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
             labelsStackView.leadingAnchor.constraint(equalTo: myImageView.trailingAnchor, constant: 12),
             labelsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            labelsStackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+
 
             loader.centerXAnchor.constraint(equalTo: self.myImageView.centerXAnchor),
             loader.centerYAnchor.constraint(equalTo: self.myImageView.centerYAnchor)
@@ -103,19 +105,24 @@ class CustomTableViewCell: UITableViewCell {
         
         self.viewModel = viewModel
         
-        decpLabel.text = viewModel.descriptionText
+        descriptionLabel.text = viewModel.descriptionText
         likesLabel.text = viewModel.likesText
         
         loader.startAnimating()
             
-        viewModel.fetchImage() { [weak self] image in
-            self?.loader.stopAnimating() //hides spinner
-            self?.myImageView.image = image
-            //set the label
+        ImageLoader.shared.loadImage(from: viewModel.url) { [weak self] image, url in
+            guard let self else {return}
+            if self.viewModel?.imageInfo.largeImageURL == url {
+                self.loader.stopAnimating()
+                self.myImageView.image = image
+            }
         }
         
-        
+//        viewModel.fetchImage() { [weak self] image in
+//            self?.loader.stopAnimating() //hides spinner
+//            self?.myImageView.image = image
+//            //set the label
+//        }
     }
-
 }
 

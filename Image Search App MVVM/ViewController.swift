@@ -47,6 +47,9 @@ class ViewController: UIViewController {
         tableView.register(CustomTableViewCell.self, forCellReuseIdentifier: CustomTableViewCell.identifier)
         tableView.dataSource = self
         tableView.delegate   = self
+        
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 100
     }
     
     //set-up footer
@@ -106,8 +109,9 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
         }
     }
     
-    func tableView(_ tableView: UITableView,
-               heightForRowAt indexPath: IndexPath) -> CGFloat {
-       return 100
-    }
+//    func tableView(_ tableView: UITableView,
+//               heightForRowAt indexPath: IndexPath) -> CGFloat {
+//       
+//        return 100
+//    }
 }

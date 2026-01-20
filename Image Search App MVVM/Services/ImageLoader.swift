@@ -7,60 +7,87 @@
 
 import UIKit
 
-final class ImageCache {
+final class ImageLoader {
     
-    static let shared = ImageCache()
+    static let shared = ImageLoader()
     
     private let cache = NSCache<NSURL, UIImage>()
-    
-    private let queue = DispatchQueue(label: "com.yourapp.imagecache.queue")
-    
-    var loadingResponses = [URL : [(UIImage?)-> Void]]()
+    private var loadingResponses = [URL : [(UIImage?, URL)-> Void]]()
+    private let queue = DispatchQueue(label: "com.image.loader.queue", attributes: .concurrent)
     
     private init(){}
     
-    func getImage(for url: URL) -> UIImage? {
-        return cache.object(forKey: url as NSURL)
-    }
-    
-    func insert(_ image: UIImage,for url: URL) {
-            cache.setObject(image, forKey: url as NSURL)
-    }
-    
-    
-    func loadImage(from url: URL, completion: @escaping (UIImage?)->Void){
+    func loadImage(from url: URL, completion: @escaping (UIImage?, URL)->Void){
         //cells and view models never touch url session directly
+        
+        //check cache
+        if let cached = cache.object(forKey: url as NSURL){
+            completion(cached, url)
+            return
+        }
+        
+        // see if is alreading in loading
+        var shouldStartDownload = false
+        
+        queue.sync(flags: .barrier){
+            if loadingResponses[url] != nil{
+                loadingResponses[url]?.append(completion)
+            }
+            else{
+                loadingResponses[url] = [completion]
+                shouldStartDownload = true
+            }
+        }
+        
+        //if already downloading, just wait
+        guard shouldStartDownload else { return }
+        
+        
+        print("started netwrok call for downloading")
+        //start network call
+        let localURL = URL(string: url.absoluteString)!
+        URLSession.shared.dataTask(with: url){ [weak self] data, _, error in
+            
+            var image: UIImage? = nil
+            
+            if let error{
+                print("faced this error during data task: ", error)
+            }
+            
+            if let data{
+                image = UIImage(data: data)
+            }
+            
+            
+            
+            if image == nil{
+                print("problem while image creation")
+            }
+            
+            //cache image
+            if let image {
+                DispatchQueue.main.async {
+                    self?.cache.setObject(image, forKey: url as NSURL)
+                }
+                
+            }
+            
+            //fetch all waiting completions
+            var completions: [(UIImage?, URL)->Void] = []
+            
+            self?.queue.sync(flags: .barrier){
+                completions = self?.loadingResponses[url] ?? []
+                self?.loadingResponses[url] = nil
+            }
+            
+            //dispatch to main queue
+            DispatchQueue.main.async{
+            
+                //localUrl
+                completions.forEach({ $0(image, localURL)})
+            }
+            
+        }.resume()
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-//    func appendCompletion(_ completion: @escaping (UIImage?) -> Void, for url: URL)-> Bool{
-//       // queue.sync{
-//            if var existing = loadingResponses[url]{
-//                existing.append(completion)
-//                loadingResponses[url] = existing
-//                return true
-//            }else{
-//                loadingResponses[url] = [completion]
-//                return false
-//            }
-//       //}
-//    }
-//    
-//    func removeCompletion(for url: URL)-> [(UIImage?)-> Void]?{
-//       // return queue.sync{
-//            let completions = loadingResponses[url]
-//            loadingResponses[url] = nil
-//            return completions
-//       // }
-//    }
     
 }
