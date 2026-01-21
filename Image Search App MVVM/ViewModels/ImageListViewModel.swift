@@ -156,7 +156,7 @@ class ImageListViewModel {
         
         imageData.removeAll()
         //onDataUpdated?()
-        onStateChanged?(.loading)
+
         
         fetchImageData()
         
