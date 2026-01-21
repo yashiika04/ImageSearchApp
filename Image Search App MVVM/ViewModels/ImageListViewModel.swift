@@ -27,7 +27,8 @@ class ImageListViewModel {
     private var currentPage: Int = 1
     private var isFetching: Bool = false {
         didSet {
-            self.onLoadingStateChanged?(isFetching)
+//            self.onLoadingStateChanged?(isFetching)
+            self.onStateChanged?(.loading)
         }
     }
     
@@ -37,9 +38,12 @@ class ImageListViewModel {
     private var currentQuery: String = "yellow flowers" //default
     
     //notify the view controller when data changes
-    var onDataUpdated: (()-> Void)?
+    //var onDataUpdated: (()-> Void)?
     //notify the state change
-    var onLoadingStateChanged: ((Bool)->Void)?
+    //var onLoadingStateChanged: ((Bool)->Void)?
+    
+    //state change
+    var onStateChanged: ((RequestState)->Void)?
     
     //fetch logic
     func fetchImageData(){
@@ -49,6 +53,7 @@ class ImageListViewModel {
         }
         
         isFetching = true
+        onStateChanged?(.loading)
     
         
         let encodedQuery = currentQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
@@ -61,6 +66,7 @@ class ImageListViewModel {
             let url = URL(string: urlString)
         else {
             isFetching = false
+            onStateChanged?(.error(NSError(domain: "invalid url", code: 0)))
             return
         }
     
@@ -70,6 +76,7 @@ class ImageListViewModel {
                 print("encountered an error: ", error)
                 DispatchQueue.main.async{
                     self.isFetching = false
+                    self.onStateChanged?(.error(error))
                    
                 }
                 return
@@ -79,6 +86,7 @@ class ImageListViewModel {
                 print("could not get data")
                 DispatchQueue.main.async{
                     self.isFetching = false
+                    self.onStateChanged?(.error(NSError(domain: "invalid data", code: 0)))
                
                 }
                 return
@@ -90,7 +98,8 @@ class ImageListViewModel {
             else {
                 DispatchQueue.main.sync{
                     self.hasMoreData = false
-                    self.onLoadingStateChanged?(false)
+                    //self.onLoadingStateChanged?(false)
+                    self.onStateChanged?(.error(NSError(domain: "invalid http response", code: 0)))
                 }
                 return
             }
@@ -110,12 +119,14 @@ class ImageListViewModel {
                     
                     self.isFetching = false
                    
-                    self.onDataUpdated?()
+                    //self.onDataUpdated?()
+                    self.onStateChanged?(.success)
                 }
                 
             }catch{
                 DispatchQueue.main.async{
                     self.isFetching = false
+                    self.onStateChanged?(.error(error))
               
                 }
                 print(error)
@@ -144,7 +155,8 @@ class ImageListViewModel {
         isFetching = false
         
         imageData.removeAll()
-        onDataUpdated?()
+        //onDataUpdated?()
+        onStateChanged?(.loading)
         
         fetchImageData()
         

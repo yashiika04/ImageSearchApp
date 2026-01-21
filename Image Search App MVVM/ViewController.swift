@@ -18,15 +18,16 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         setUp()
         setUpSearchController()
+        bindViewModel()
         
         // 1. Bind ViewModel to ViewController
-        viewModel.onDataUpdated = { [weak self] in
-            self?.tableView.reloadData()
-        }
-        viewModel.onLoadingStateChanged = { [weak self] isLoading in
-            self?.tableView.tableFooterView = isLoading ? self?.makeLoadingFooter(): nil
-            
-        }
+//        viewModel.onDataUpdated = { [weak self] in
+//            self?.tableView.reloadData()
+//        }
+//        viewModel.onLoadingStateChanged = { [weak self] isLoading in
+//            self?.tableView.tableFooterView = isLoading ? self?.makeLoadingFooter(): nil
+//            
+//        }
             
         // 2. Ask ViewModel to fetch data
         viewModel.fetchImageData()
@@ -100,7 +101,28 @@ class ViewController: UIViewController {
         
         return footer
     }
-
+    
+    //binding view model
+    private func bindViewModel(){
+        viewModel.onStateChanged = {[weak self] state in
+            guard let self else {return}
+            
+            switch state{
+            case .loading:
+                self.tableView.tableFooterView = self.makeLoadingFooter()
+            case .success:
+                self.tableView.reloadData( )
+                self.tableView.tableFooterView = nil
+            case .error(let error):
+                print("error: \(error)")
+                self.tableView.tableFooterView = nil
+            case .noInternet:
+                print("no internet")
+                self.tableView.tableFooterView = nil
+            }
+        }
+        
+    }
 
 }
 extension ViewController: UITableViewDataSource, UITableViewDelegate{
@@ -138,8 +160,4 @@ extension ViewController: UISearchBarDelegate{
         //tell view model to start search
         viewModel.search(query)
     }
-}
-
-#Preview{
-    ViewController()
 }
