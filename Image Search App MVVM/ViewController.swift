@@ -129,7 +129,7 @@ extension ViewController: UISearchBarDelegate{
         //get text
         guard
             let query = searchBar.text,
-            !query.trimmingCharacters(in: .whitespaces).isEmpty
+            !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else{
             return
         }

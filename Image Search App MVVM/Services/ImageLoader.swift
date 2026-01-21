@@ -13,6 +13,7 @@ final class ImageLoader {
     
     private let cache = NSCache<NSURL, UIImage>()
     private var loadingResponses = [URL : [(UIImage?, URL)-> Void]]()
+    private var runningTask = [URL: URLSessionDataTask]()
     private let queue = DispatchQueue(label: "com.image.loader.queue", attributes: .concurrent)
     
     private init(){}
@@ -46,7 +47,7 @@ final class ImageLoader {
         print("started netwrok call for downloading")
         //start network call
         let localURL = URL(string: url.absoluteString)!
-        URLSession.shared.dataTask(with: url){ [weak self] data, _, error in
+        let downloadTask = URLSession.shared.dataTask(with: url){ [weak self] data, _, error in
             
             var image: UIImage? = nil
             
@@ -78,6 +79,7 @@ final class ImageLoader {
             self?.queue.sync(flags: .barrier){
                 completions = self?.loadingResponses[url] ?? []
                 self?.loadingResponses[url] = nil
+                self?.runningTask[url] = nil
             }
             
             //dispatch to main queue
@@ -87,7 +89,20 @@ final class ImageLoader {
                 completions.forEach({ $0(image, localURL)})
             }
             
-        }.resume()
+        }
+        
+        queue.sync(flags: .barrier){
+            self.runningTask[url] = downloadTask
+        }
+        downloadTask.resume()
+    }
+    
+    func cancelAll(){
+        queue.sync(flags: .barrier){
+            self.runningTask.values.forEach({ $0.cancel() })
+            self.runningTask.removeAll()
+            self.loadingResponses.removeAll()
+        }
     }
     
 }

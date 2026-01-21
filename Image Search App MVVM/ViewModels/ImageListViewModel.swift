@@ -7,13 +7,30 @@
 
 import Foundation
 
+
+enum RequestState {
+    case loading
+    case error(Error)
+    case noInternet
+    case success
+}
+
+
+
 class ImageListViewModel {
     
     private var imageData: [ImageInfo] = []
     
+    private var currentDataTask: URLSessionDataTask?
+    
     //page tracking
     private var currentPage: Int = 1
-    private var isFetching: Bool = false
+    private var isFetching: Bool = false {
+        didSet {
+            self.onLoadingStateChanged?(isFetching)
+        }
+    }
+    
     private var hasMoreData: Bool = true
     
     //query
@@ -49,7 +66,7 @@ class ImageListViewModel {
             return
         }
     
-        URLSession.shared.dataTask(with: url){ data, response, error in
+        currentDataTask = URLSession.shared.dataTask(with: url){ data, response, error in
          
             if let error {
                 print("encountered an error: ", error)
@@ -106,7 +123,9 @@ class ImageListViewModel {
                 print(error)
             }
             
-        }.resume()
+        }
+        
+        currentDataTask?.resume()
     }
     
     //query logic
@@ -115,6 +134,10 @@ class ImageListViewModel {
         guard !trimmed.isEmpty else {
             return
         }
+        
+        //cancel previous url data task
+        currentDataTask?.cancel()
+        ImageLoader.shared.cancelAll()
         
         currentQuery = trimmed
         
