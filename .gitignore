@@ -1,0 +1,17 @@
+# Xcode
+DerivedData/
+build/
+*.xcuserdata
+*.xcuserstate
+*.moved-aside
+*.hmap
+*.ipa
+
+# Swift
+*.swiftdoc
+*.swiftmodule
+*.swiftsourceinfo
+
+# macOS
+.DS_Store
+
