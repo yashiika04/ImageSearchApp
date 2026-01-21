@@ -49,8 +49,7 @@ class ImageListViewModel {
         }
         
         isFetching = true
-        onLoadingStateChanged?(true)
-        
+    
         
         let encodedQuery = currentQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
 
@@ -62,7 +61,6 @@ class ImageListViewModel {
             let url = URL(string: urlString)
         else {
             isFetching = false
-            onLoadingStateChanged?(false)
             return
         }
     
@@ -72,7 +70,7 @@ class ImageListViewModel {
                 print("encountered an error: ", error)
                 DispatchQueue.main.async{
                     self.isFetching = false
-                    self.onLoadingStateChanged?(false)
+                   
                 }
                 return
             }
@@ -81,7 +79,7 @@ class ImageListViewModel {
                 print("could not get data")
                 DispatchQueue.main.async{
                     self.isFetching = false
-                    self.onLoadingStateChanged?(false)
+               
                 }
                 return
             }
@@ -111,14 +109,14 @@ class ImageListViewModel {
                     }
                     
                     self.isFetching = false
-                    self.onLoadingStateChanged?(false)
+                   
                     self.onDataUpdated?()
                 }
                 
             }catch{
                 DispatchQueue.main.async{
                     self.isFetching = false
-                    self.onLoadingStateChanged?(false)
+              
                 }
                 print(error)
             }

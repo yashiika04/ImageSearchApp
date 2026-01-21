@@ -26,8 +26,8 @@ class CustomCellViewModel{
     
     init(imageInfo: ImageInfo) {
        self.imageInfo = imageInfo
-       //self.url = imageInfo.previewURL
-       self.url = imageInfo.largeImageURL
+       self.url = imageInfo.previewURL
+       //self.url = imageInfo.largeImageURL
     }
     
     
