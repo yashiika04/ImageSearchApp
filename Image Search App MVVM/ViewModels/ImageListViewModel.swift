@@ -7,15 +7,12 @@
 
 import Foundation
 
-
 enum RequestState {
     case loading
     case error(Error)
     case noInternet
     case success
 }
-
-
 
 class ImageListViewModel {
     

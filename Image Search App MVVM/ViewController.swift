@@ -13,6 +13,8 @@ class ViewController: UIViewController {
     let viewModel = ImageListViewModel()
     
     private let searchController = UISearchController(searchResultsController: nil)
+    private let stateView = StateView()
+
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,13 +28,21 @@ class ViewController: UIViewController {
     
     private func setUp(){
         view.addSubview(tableView)
-        
+        view.addSubview(stateView)
+
         tableView.translatesAutoresizingMaskIntoConstraints = false
+        stateView.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             tableView.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor),
-            tableView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor)
+            tableView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor),
+            
+            stateView.topAnchor.constraint(equalTo: tableView.topAnchor),
+            stateView.bottomAnchor.constraint(equalTo: tableView.bottomAnchor),
+            stateView.leadingAnchor.constraint(equalTo: tableView.leadingAnchor),
+            stateView.trailingAnchor.constraint(equalTo: tableView.trailingAnchor)
         ])
         
         tableView.register(CustomTableViewCell.self, forCellReuseIdentifier: CustomTableViewCell.identifier)
@@ -96,16 +106,20 @@ class ViewController: UIViewController {
             
             switch state{
             case .loading:
+                self.stateView.hide()
                 self.tableView.tableFooterView = self.makeLoadingFooter()
             case .success:
                 self.tableView.reloadData( )
                 self.tableView.tableFooterView = nil
+                self.stateView.hide()
             case .error(let error):
                 print("error: \(error)")
                 self.tableView.tableFooterView = nil
+                self.stateView.setMessage("Error: \(error.localizedDescription)")
             case .noInternet:
                 print("no internet")
                 self.tableView.tableFooterView = nil
+                self.stateView.setMessage("No internet connection")
             }
         }
         
