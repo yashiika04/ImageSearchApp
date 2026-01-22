@@ -18,22 +18,12 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         setUp()
         setUpSearchController()
-        bindViewModel()
         
-        // 1. Bind ViewModel to ViewController
-//        viewModel.onDataUpdated = { [weak self] in
-//            self?.tableView.reloadData()
-//        }
-//        viewModel.onLoadingStateChanged = { [weak self] isLoading in
-//            self?.tableView.tableFooterView = isLoading ? self?.makeLoadingFooter(): nil
-//            
-//        }
+        bindViewModel()
             
-        // 2. Ask ViewModel to fetch data
         viewModel.fetchImageData()
     }
     
-    //set up table view UI
     private func setUp(){
         view.addSubview(tableView)
         
@@ -52,8 +42,7 @@ class ViewController: UIViewController {
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 100
     }
-    
-    //set-up search controller
+
     private func setUpSearchController(){
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search Images"
@@ -68,7 +57,6 @@ class ViewController: UIViewController {
         definesPresentationContext = true
     }
     
-    //set-up footer
     private func makeLoadingFooter()-> UIView{
         let footer = UIView(frame: CGRect(x: 0, y: 0,
                                                  width: tableView.frame.width,
@@ -102,7 +90,6 @@ class ViewController: UIViewController {
         return footer
     }
     
-    //binding view model
     private func bindViewModel(){
         viewModel.onStateChanged = {[weak self] state in
             guard let self else {return}
@@ -134,7 +121,6 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
         guard let cell = tableView.dequeueReusableCell(withIdentifier: CustomTableViewCell.identifier, for: indexPath) as? CustomTableViewCell else{
             fatalError("could not create the cell")
         }
-
 
         cell.config(with: self.viewModel.getCellVM(at: indexPath.row))
         return cell

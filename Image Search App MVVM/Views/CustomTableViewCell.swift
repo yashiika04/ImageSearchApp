@@ -117,12 +117,7 @@ class CustomTableViewCell: UITableViewCell {
                 self.myImageView.image = image
             }
         }
-        
-//        viewModel.fetchImage() { [weak self] image in
-//            self?.loader.stopAnimating() //hides spinner
-//            self?.myImageView.image = image
-//            //set the label
-//        }
+
     }
 }
 

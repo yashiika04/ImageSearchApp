@@ -20,32 +20,18 @@ enum RequestState {
 class ImageListViewModel {
     
     private var imageData: [ImageInfo] = []
-    
     private var currentDataTask: URLSessionDataTask?
     
-    //page tracking
     private var currentPage: Int = 1
     private var isFetching: Bool = false {
         didSet {
-//            self.onLoadingStateChanged?(isFetching)
             self.onStateChanged?(.loading)
         }
     }
-    
     private var hasMoreData: Bool = true
-    
-    //query
     private var currentQuery: String = "yellow flowers" //default
-    
-    //notify the view controller when data changes
-    //var onDataUpdated: (()-> Void)?
-    //notify the state change
-    //var onLoadingStateChanged: ((Bool)->Void)?
-    
-    //state change
     var onStateChanged: ((RequestState)->Void)?
     
-    //fetch logic
     func fetchImageData(){
         
         guard !isFetching && hasMoreData else{
@@ -98,7 +84,6 @@ class ImageListViewModel {
             else {
                 DispatchQueue.main.sync{
                     self.hasMoreData = false
-                    //self.onLoadingStateChanged?(false)
                     self.onStateChanged?(.error(NSError(domain: "invalid http response", code: 0)))
                 }
                 return
@@ -108,7 +93,6 @@ class ImageListViewModel {
                 let response = try JSONDecoder().decode(ImageApiResponse.self, from: data)
                 let images = response.hits
                 
-                //dispatch queue notify on main thread
                 DispatchQueue.main.async{
                     if images.isEmpty {
                         self.hasMoreData = false
@@ -118,8 +102,6 @@ class ImageListViewModel {
                     }
                     
                     self.isFetching = false
-                   
-                    //self.onDataUpdated?()
                     self.onStateChanged?(.success)
                 }
                 
@@ -127,17 +109,13 @@ class ImageListViewModel {
                 DispatchQueue.main.async{
                     self.isFetching = false
                     self.onStateChanged?(.error(error))
-              
                 }
                 print(error)
             }
-            
         }
-        
         currentDataTask?.resume()
     }
-    
-    //query logic
+
     func search(_ query: String) {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -155,25 +133,19 @@ class ImageListViewModel {
         isFetching = false
         
         imageData.removeAll()
-        //onDataUpdated?()
-
         
         fetchImageData()
         
     }
     
-    //return rows in imageData
     func numberOfRows()->Int{
         return imageData.count
     }
     
-    //return data at particular index
     func getCellVM(at index: Int)-> CustomCellViewModel {
         let info = imageData[index]
-        //return CustomCellViewModel(imageURL: info.previewURL)
         return CustomCellViewModel(imageInfo: info)
     }
-    
-    
+
 }
 
