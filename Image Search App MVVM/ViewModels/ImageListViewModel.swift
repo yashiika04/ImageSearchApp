@@ -8,10 +8,11 @@
 import Foundation
 
 enum RequestState {
-    case loading
+    case initalLoading
+    case loadingNextPage
+    case success
     case error(Error)
     case noInternet
-    case success
     case endOfData
 }
 
@@ -33,7 +34,11 @@ class ImageListViewModel {
         }
         
         isFetching = true
-        onStateChanged?(.loading)
+        if (currentPage == 1){
+            onStateChanged?(.initalLoading)
+        }else{
+            onStateChanged?(.loadingNextPage)
+        }
     
         
         let encodedQuery = currentQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""

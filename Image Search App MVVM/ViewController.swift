@@ -67,37 +67,19 @@ class ViewController: UIViewController {
         definesPresentationContext = true
     }
     
-    private func makeLoadingFooter()-> UIView{
-        let footer = UIView(frame: CGRect(x: 0, y: 0,
-                                                 width: tableView.frame.width,
-                                                 height: 60))
-        
-        let spinner = UIActivityIndicatorView(style: .medium)
-        spinner.startAnimating( )
-        
-        let label: UILabel = {
-            let label = UILabel()
-            label.text = "Loading..."
-            label.textColor = .secondaryLabel
-            label.font  = .systemFont(ofSize: 14)
-            return label
-        }()
-        
-        footer.addSubview(spinner)
-        footer.addSubview(label)
-        
-        spinner.translatesAutoresizingMaskIntoConstraints = false
-        label.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-                spinner.centerYAnchor.constraint(equalTo: footer.centerYAnchor),
-                spinner.centerXAnchor.constraint(equalTo: footer.centerXAnchor),
-
-                label.centerYAnchor.constraint(equalTo: footer.centerYAnchor),
-                label.leadingAnchor.constraint(equalTo: spinner.trailingAnchor)
-            ])
-        
-        return footer
+    private func makeFooter(for state: RequestState)-> UIView?{
+        switch state{
+        case .loadingNextPage:
+            return TableFooterView(type: .loading, width: tableView.frame.width)
+        case .endOfData:
+            return TableFooterView(type: .endOfData, width: tableView.frame.width)
+        case .error, .noInternet:
+            return TableFooterView(type: .retry(action: {[weak self] in
+                self?.viewModel.fetchImageData()
+            }), width: tableView.frame.width)
+        default:
+            return nil
+        }
     }
     
     private func bindViewModel(){
@@ -105,23 +87,33 @@ class ViewController: UIViewController {
             guard let self else {return}
             
             switch state{
-            case .loading:
-                self.tableView.tableFooterView = self.makeLoadingFooter()
-            case .success:
-                self.tableView.reloadData( )
-                self.tableView.tableFooterView = nil
+            case .initalLoading:
+                self.stateView.setMessage( "Loading...")
+    
+            case .loadingNextPage:
                 self.stateView.hide()
+                self.tableView.tableFooterView = makeFooter(for: .loadingNextPage)
+            case .success:
+                self.stateView.hide()
+                self.tableView.reloadData( )
+                self.tableView.tableFooterView = makeFooter(for: .success)
             case .endOfData:
-                self.tableView.tableFooterView = nil
-                self.stateView.setMessage( "No more images", buttonType: .ok)
+                self.stateView.hide()
+                self.tableView.tableFooterView = makeFooter(for: .endOfData)
             case .error(let error):
-                print("error: \(error)")
-                self.tableView.tableFooterView = nil
-                self.stateView.setMessage("Error: \(error.localizedDescription)", buttonType: .retry)
+                if self.viewModel.numberOfRows() == 0{
+                    //first page error block screen
+                    self.stateView.setMessage("Error: \(error.localizedDescription)", action: .retry)
+                }else{
+                    // Pagination error → don’t block
+                    self.tableView.tableFooterView = makeFooter(for: .error(error))
+                }
             case .noInternet:
-                print("no internet")
-                self.tableView.tableFooterView = nil
-                self.stateView.setMessage("No internet connection", buttonType: .retry)
+                if self.viewModel.numberOfRows() == 0 {
+                    self.stateView.setMessage("No internet connection", action: .retry)
+                } else {
+                    self.tableView.tableFooterView = makeFooter(for: .noInternet)
+                }
             }
         }
         
@@ -131,8 +123,6 @@ class ViewController: UIViewController {
             switch action{
                 case .retry:
                 self.viewModel.fetchImageData()
-            case .ok:
-                self.stateView.hide()
             }
         }
         

@@ -9,7 +9,6 @@ import UIKit
 
 enum StateViewAction{
     case retry
-    case ok
 }
 
 class StateView: UIView {
@@ -68,17 +67,18 @@ class StateView: UIView {
         actionButton.addTarget(self, action: #selector(didTapButton), for: .touchUpInside)
     }
     
-    func setMessage(_ text: String, buttonType: StateViewAction? = nil){
+    func setMessage(_ text: String, action: StateViewAction? = nil){
         label.text = text
         isHidden = false
+        actionButton.isHidden = true
         
-        if let type = buttonType{
-            actionButton.isHidden = false
+        if let type = action{
+            
             switch type {
             case .retry:
                 actionButton.setTitle("Retry", for: .normal)
-            case .ok:
-                actionButton.setTitle("OK", for: .normal)
+                actionButton.isHidden = false
+                
             }
         }
     }
@@ -86,12 +86,11 @@ class StateView: UIView {
     func hide(){
         isHidden = true
     }
-    
+        
     @objc private func didTapButton(){
         guard let title = actionButton.titleLabel?.text else { return }
         switch title{
         case "Retry": onActionTapped?(.retry)
-        case "OK": onActionTapped?(.ok)
         default: break
         }
     }
