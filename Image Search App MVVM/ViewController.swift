@@ -23,6 +23,10 @@ class ViewController: UIViewController {
         
         bindViewModel()
             
+        stateView.onRetryTapped = { [weak self] in
+            self?.viewModel.fetchImageData()
+        }
+        
         viewModel.fetchImageData()
     }
     
@@ -106,7 +110,6 @@ class ViewController: UIViewController {
             
             switch state{
             case .loading:
-                self.stateView.hide()
                 self.tableView.tableFooterView = self.makeLoadingFooter()
             case .success:
                 self.tableView.reloadData( )
@@ -115,11 +118,11 @@ class ViewController: UIViewController {
             case .error(let error):
                 print("error: \(error)")
                 self.tableView.tableFooterView = nil
-                self.stateView.setMessage("Error: \(error.localizedDescription)")
+                self.stateView.setMessage("Error: \(error.localizedDescription)", showRetry: true)
             case .noInternet:
                 print("no internet")
                 self.tableView.tableFooterView = nil
-                self.stateView.setMessage("No internet connection")
+                self.stateView.setMessage("No internet connection", showRetry: true)
             }
         }
         
