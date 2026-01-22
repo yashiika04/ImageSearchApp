@@ -7,6 +7,11 @@
 
 import UIKit
 
+enum StateViewAction{
+    case retry
+    case ok
+}
+
 class StateView: UIView {
     
     private let label: UILabel = {
@@ -18,15 +23,15 @@ class StateView: UIView {
         return label
     }()
     
-    private let retryButton: UIButton = {
+    private let actionButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Retry", for: .normal)
+        button.setTitle("", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
         button.isHidden = true
         return button
     }()
     
-    var onRetryTapped: (()->Void)?
+    var onActionTapped: ((StateViewAction)->Void)?
     
     override init(frame: CGRect){
         super.init(frame: frame)
@@ -42,7 +47,7 @@ class StateView: UIView {
         backgroundColor = UIColor.systemBackground.withAlphaComponent(0.95)
         isHidden = true
         
-        let stackView = UIStackView(arrangedSubviews: [label, retryButton])
+        let stackView = UIStackView(arrangedSubviews: [label, actionButton])
         stackView.axis = .vertical
         stackView.spacing = 12
         stackView.distribution = .fill
@@ -60,27 +65,34 @@ class StateView: UIView {
             
         ])
         
-        retryButton.addTarget(self, action: #selector(didTapRetry), for: .touchUpInside)
+        actionButton.addTarget(self, action: #selector(didTapButton), for: .touchUpInside)
     }
     
-    func setMessage(_ text: String, showRetry: Bool = false){
+    func setMessage(_ text: String, buttonType: StateViewAction? = nil){
         label.text = text
         isHidden = false
-        retryButton.isHidden = !showRetry
+        
+        if let type = buttonType{
+            actionButton.isHidden = false
+            switch type {
+            case .retry:
+                actionButton.setTitle("Retry", for: .normal)
+            case .ok:
+                actionButton.setTitle("OK", for: .normal)
+            }
+        }
     }
     
     func hide(){
         isHidden = true
     }
     
-    @objc private func didTapRetry(){
-        onRetryTapped?()
+    @objc private func didTapButton(){
+        guard let title = actionButton.titleLabel?.text else { return }
+        switch title{
+        case "Retry": onActionTapped?(.retry)
+        case "OK": onActionTapped?(.ok)
+        default: break
+        }
     }
-}
-
-#Preview {
-    let stateView = StateView()
-    stateView.setMessage("No Internet", showRetry: true) // make visible
-    //stateView.frame = CGRect(x: 0, y: 0, width: 300, height: 200) // set frame for preview
-    return stateView
 }

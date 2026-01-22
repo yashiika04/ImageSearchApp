@@ -12,6 +12,7 @@ enum RequestState {
     case error(Error)
     case noInternet
     case success
+    case endOfData
 }
 
 class ImageListViewModel {
@@ -20,11 +21,7 @@ class ImageListViewModel {
     private var currentDataTask: URLSessionDataTask?
     
     private var currentPage: Int = 1
-    private var isFetching: Bool = false {
-        didSet {
-            self.onStateChanged?(.loading)
-        }
-    }
+    private var isFetching: Bool = false
     private var hasMoreData: Bool = true
     private var currentQuery: String = "yellow flowers" //default
     var onStateChanged: ((RequestState)->Void)?
@@ -81,7 +78,7 @@ class ImageListViewModel {
             else {
                 DispatchQueue.main.sync{
                     self.hasMoreData = false
-                    self.onStateChanged?(.error(NSError(domain: "invalid http response", code: 0)))
+                    self.onStateChanged?(.endOfData)
                 }
                 return
             }
@@ -93,6 +90,8 @@ class ImageListViewModel {
                 DispatchQueue.main.async{
                     if images.isEmpty {
                         self.hasMoreData = false
+                        self.isFetching = false
+                        self.onStateChanged?(.endOfData)
                     }else{
                         self.imageData.append(contentsOf: images)
                         self.currentPage += 1

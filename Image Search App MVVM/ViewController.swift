@@ -22,11 +22,7 @@ class ViewController: UIViewController {
         setUpSearchController()
         
         bindViewModel()
-            
-        stateView.onRetryTapped = { [weak self] in
-            self?.viewModel.fetchImageData()
-        }
-        
+
         viewModel.fetchImageData()
     }
     
@@ -115,14 +111,28 @@ class ViewController: UIViewController {
                 self.tableView.reloadData( )
                 self.tableView.tableFooterView = nil
                 self.stateView.hide()
+            case .endOfData:
+                self.tableView.tableFooterView = nil
+                self.stateView.setMessage( "No more images", buttonType: .ok)
             case .error(let error):
                 print("error: \(error)")
                 self.tableView.tableFooterView = nil
-                self.stateView.setMessage("Error: \(error.localizedDescription)", showRetry: true)
+                self.stateView.setMessage("Error: \(error.localizedDescription)", buttonType: .retry)
             case .noInternet:
                 print("no internet")
                 self.tableView.tableFooterView = nil
-                self.stateView.setMessage("No internet connection", showRetry: true)
+                self.stateView.setMessage("No internet connection", buttonType: .retry)
+            }
+        }
+        
+        stateView.onActionTapped = {[weak self] action in
+            guard let self else {return}
+            
+            switch action{
+                case .retry:
+                self.viewModel.fetchImageData()
+            case .ok:
+                self.stateView.hide()
             }
         }
         
