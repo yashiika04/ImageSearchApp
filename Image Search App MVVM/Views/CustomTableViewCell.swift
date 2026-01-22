@@ -88,10 +88,17 @@ class CustomTableViewCell: UITableViewCell {
             myImageView.widthAnchor.constraint(equalToConstant: 100),
             myImageView.heightAnchor.constraint(equalToConstant: 100),
             
-            labelsStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            labelsStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+            myImageView.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: 8),
+            myImageView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -8),
+            
+            
+            labelsStackView.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: 12),
+            labelsStackView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -12),
+            
             labelsStackView.leadingAnchor.constraint(equalTo: myImageView.trailingAnchor, constant: 12),
             labelsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+
+            labelsStackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
 
 
             loader.centerXAnchor.constraint(equalTo: self.myImageView.centerXAnchor),
