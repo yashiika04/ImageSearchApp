@@ -2,6 +2,7 @@
 DerivedData/
 build/
 *.xcuserdata
+*.xcuserdatad
 *.xcuserstate
 *.moved-aside
 *.hmap
