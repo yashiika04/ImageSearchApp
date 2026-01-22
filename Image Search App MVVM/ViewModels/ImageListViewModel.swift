@@ -14,6 +14,7 @@ enum RequestState {
     case error(Error)
     case noInternet
     case endOfData
+    case reset
 }
 
 class ImageListViewModel {
@@ -134,6 +135,8 @@ class ImageListViewModel {
         isFetching = false
         
         imageData.removeAll()
+        
+        onStateChanged?(.reset)
         
         fetchImageData()
         

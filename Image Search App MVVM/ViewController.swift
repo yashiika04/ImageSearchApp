@@ -89,7 +89,6 @@ class ViewController: UIViewController {
             switch state{
             case .initalLoading:
                 self.stateView.setMessage( "Loading...")
-    
             case .loadingNextPage:
                 self.stateView.hide()
                 self.tableView.tableFooterView = makeFooter(for: .loadingNextPage)
@@ -100,6 +99,9 @@ class ViewController: UIViewController {
             case .endOfData:
                 self.stateView.hide()
                 self.tableView.tableFooterView = makeFooter(for: .endOfData)
+            case .reset:
+                self.stateView.hide()
+                self.tableView.reloadData()
             case .error(let error):
                 if self.viewModel.numberOfRows() == 0{
                     //first page error block screen
