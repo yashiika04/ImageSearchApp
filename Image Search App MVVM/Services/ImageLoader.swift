@@ -45,7 +45,7 @@ final class ImageLoader {
         
         
         print("started netwrok call for downloading")
-        //start network call
+       
         let localURL = URL(string: url.absoluteString)!
         let downloadTask = URLSession.shared.dataTask(with: url){ [weak self] data, _, error in
             
@@ -59,13 +59,10 @@ final class ImageLoader {
                 image = UIImage(data: data)
             }
             
-            
-            
             if image == nil{
                 print("problem while image creation")
             }
             
-            //cache image
             if let image {
                 DispatchQueue.main.async {
                     self?.cache.setObject(image, forKey: url as NSURL)
@@ -81,11 +78,8 @@ final class ImageLoader {
                 self?.loadingResponses[url] = nil
                 self?.runningTask[url] = nil
             }
-            
-            //dispatch to main queue
+ 
             DispatchQueue.main.async{
-            
-                //localUrl
                 completions.forEach({ $0(image, localURL)})
             }
             

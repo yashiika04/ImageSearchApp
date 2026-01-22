@@ -13,35 +13,36 @@ class ViewController: UIViewController {
     let viewModel = ImageListViewModel()
     
     private let searchController = UISearchController(searchResultsController: nil)
+    private let stateView = StateView()
+
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setUp()
         setUpSearchController()
         
-        // 1. Bind ViewModel to ViewController
-        viewModel.onDataUpdated = { [weak self] in
-            self?.tableView.reloadData()
-        }
-        viewModel.onLoadingStateChanged = { [weak self] isLoading in
-            self?.tableView.tableFooterView = isLoading ? self?.makeLoadingFooter(): nil
+        bindViewModel()
             
-        }
-            
-        // 2. Ask ViewModel to fetch data
         viewModel.fetchImageData()
     }
     
-    //set up table view UI
     private func setUp(){
         view.addSubview(tableView)
-        
+        view.addSubview(stateView)
+
         tableView.translatesAutoresizingMaskIntoConstraints = false
+        stateView.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             tableView.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor),
-            tableView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor)
+            tableView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor),
+            
+            stateView.topAnchor.constraint(equalTo: tableView.topAnchor),
+            stateView.bottomAnchor.constraint(equalTo: tableView.bottomAnchor),
+            stateView.leadingAnchor.constraint(equalTo: tableView.leadingAnchor),
+            stateView.trailingAnchor.constraint(equalTo: tableView.trailingAnchor)
         ])
         
         tableView.register(CustomTableViewCell.self, forCellReuseIdentifier: CustomTableViewCell.identifier)
@@ -51,8 +52,7 @@ class ViewController: UIViewController {
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 100
     }
-    
-    //set-up search controller
+
     private func setUpSearchController(){
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search Images"
@@ -67,7 +67,6 @@ class ViewController: UIViewController {
         definesPresentationContext = true
     }
     
-    //set-up footer
     private func makeLoadingFooter()-> UIView{
         let footer = UIView(frame: CGRect(x: 0, y: 0,
                                                  width: tableView.frame.width,
@@ -100,7 +99,31 @@ class ViewController: UIViewController {
         
         return footer
     }
-
+    
+    private func bindViewModel(){
+        viewModel.onStateChanged = {[weak self] state in
+            guard let self else {return}
+            
+            switch state{
+            case .loading:
+                self.stateView.hide()
+                self.tableView.tableFooterView = self.makeLoadingFooter()
+            case .success:
+                self.tableView.reloadData( )
+                self.tableView.tableFooterView = nil
+                self.stateView.hide()
+            case .error(let error):
+                print("error: \(error)")
+                self.tableView.tableFooterView = nil
+                self.stateView.setMessage("Error: \(error.localizedDescription)")
+            case .noInternet:
+                print("no internet")
+                self.tableView.tableFooterView = nil
+                self.stateView.setMessage("No internet connection")
+            }
+        }
+        
+    }
 
 }
 extension ViewController: UITableViewDataSource, UITableViewDelegate{
@@ -112,7 +135,6 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
         guard let cell = tableView.dequeueReusableCell(withIdentifier: CustomTableViewCell.identifier, for: indexPath) as? CustomTableViewCell else{
             fatalError("could not create the cell")
         }
-
 
         cell.config(with: self.viewModel.getCellVM(at: indexPath.row))
         return cell
@@ -138,8 +160,4 @@ extension ViewController: UISearchBarDelegate{
         //tell view model to start search
         viewModel.search(query)
     }
-}
-
-#Preview{
-    ViewController()
 }

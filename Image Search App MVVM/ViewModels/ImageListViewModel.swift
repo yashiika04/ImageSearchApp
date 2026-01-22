@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 enum RequestState {
     case loading
     case error(Error)
@@ -15,33 +14,21 @@ enum RequestState {
     case success
 }
 
-
-
 class ImageListViewModel {
     
     private var imageData: [ImageInfo] = []
-    
     private var currentDataTask: URLSessionDataTask?
     
-    //page tracking
     private var currentPage: Int = 1
     private var isFetching: Bool = false {
         didSet {
-            self.onLoadingStateChanged?(isFetching)
+            self.onStateChanged?(.loading)
         }
     }
-    
     private var hasMoreData: Bool = true
-    
-    //query
     private var currentQuery: String = "yellow flowers" //default
+    var onStateChanged: ((RequestState)->Void)?
     
-    //notify the view controller when data changes
-    var onDataUpdated: (()-> Void)?
-    //notify the state change
-    var onLoadingStateChanged: ((Bool)->Void)?
-    
-    //fetch logic
     func fetchImageData(){
         
         guard !isFetching && hasMoreData else{
@@ -49,6 +36,7 @@ class ImageListViewModel {
         }
         
         isFetching = true
+        onStateChanged?(.loading)
     
         
         let encodedQuery = currentQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
@@ -61,6 +49,7 @@ class ImageListViewModel {
             let url = URL(string: urlString)
         else {
             isFetching = false
+            onStateChanged?(.error(NSError(domain: "invalid url", code: 0)))
             return
         }
     
@@ -70,6 +59,7 @@ class ImageListViewModel {
                 print("encountered an error: ", error)
                 DispatchQueue.main.async{
                     self.isFetching = false
+                    self.onStateChanged?(.error(error))
                    
                 }
                 return
@@ -79,6 +69,7 @@ class ImageListViewModel {
                 print("could not get data")
                 DispatchQueue.main.async{
                     self.isFetching = false
+                    self.onStateChanged?(.error(NSError(domain: "invalid data", code: 0)))
                
                 }
                 return
@@ -90,7 +81,7 @@ class ImageListViewModel {
             else {
                 DispatchQueue.main.sync{
                     self.hasMoreData = false
-                    self.onLoadingStateChanged?(false)
+                    self.onStateChanged?(.error(NSError(domain: "invalid http response", code: 0)))
                 }
                 return
             }
@@ -99,7 +90,6 @@ class ImageListViewModel {
                 let response = try JSONDecoder().decode(ImageApiResponse.self, from: data)
                 let images = response.hits
                 
-                //dispatch queue notify on main thread
                 DispatchQueue.main.async{
                     if images.isEmpty {
                         self.hasMoreData = false
@@ -109,24 +99,20 @@ class ImageListViewModel {
                     }
                     
                     self.isFetching = false
-                   
-                    self.onDataUpdated?()
+                    self.onStateChanged?(.success)
                 }
                 
             }catch{
                 DispatchQueue.main.async{
                     self.isFetching = false
-              
+                    self.onStateChanged?(.error(error))
                 }
                 print(error)
             }
-            
         }
-        
         currentDataTask?.resume()
     }
-    
-    //query logic
+
     func search(_ query: String) {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -144,24 +130,19 @@ class ImageListViewModel {
         isFetching = false
         
         imageData.removeAll()
-        onDataUpdated?()
         
         fetchImageData()
         
     }
     
-    //return rows in imageData
     func numberOfRows()->Int{
         return imageData.count
     }
     
-    //return data at particular index
     func getCellVM(at index: Int)-> CustomCellViewModel {
         let info = imageData[index]
-        //return CustomCellViewModel(imageURL: info.previewURL)
         return CustomCellViewModel(imageInfo: info)
     }
-    
-    
+
 }
 
