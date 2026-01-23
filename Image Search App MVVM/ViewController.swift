@@ -150,6 +150,13 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
             viewModel.fetchImageData()
         }
     }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let imageInfo = viewModel.getImageInfo(at: indexPath.row)
+        let detailViewModel = LargeImageViewModel(imageInfo: imageInfo)
+        let vc = LargeImageViewController(viewModel: detailViewModel)
+        navigationController?.pushViewController(vc, animated: true)
+    }
 }
 extension ViewController: UISearchBarDelegate{
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar){

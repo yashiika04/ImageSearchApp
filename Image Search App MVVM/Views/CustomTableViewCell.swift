@@ -94,7 +94,6 @@ class CustomTableViewCell: UITableViewCell {
             
             labelsStackView.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: 12),
             labelsStackView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -12),
-            
             labelsStackView.leadingAnchor.constraint(equalTo: myImageView.trailingAnchor, constant: 12),
             labelsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
 

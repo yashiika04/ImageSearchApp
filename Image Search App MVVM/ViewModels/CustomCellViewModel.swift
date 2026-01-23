@@ -13,8 +13,6 @@ class CustomCellViewModel{
     let imageInfo: ImageInfo
     let url: URL
     
-    private var requestID = UUID()
-    
     var descriptionText: String{
         imageInfo.tags
     }

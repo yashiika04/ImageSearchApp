@@ -146,6 +146,11 @@ class ImageListViewModel {
         return imageData.count
     }
     
+    func getImageInfo(at index: Int) -> ImageInfo {
+        return imageData[index]
+    }
+
+    
     func getCellVM(at index: Int)-> CustomCellViewModel {
         let info = imageData[index]
         return CustomCellViewModel(imageInfo: info)
