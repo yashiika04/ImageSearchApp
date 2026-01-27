@@ -9,11 +9,51 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    let tableView  = UITableView()
-    let viewModel = ImageListViewModel()
-    
+    //let tableView  = UITableView()
+    private let viewModel = ImageListViewModel()
     private let searchController = UISearchController(searchResultsController: nil)
     private let stateView = StateView()
+    
+    private lazy var layout: UICollectionViewLayout = {
+//        let layout = UICollectionViewFlowLayout()
+//        layout.estimatedItemSize = CGSize(width: UIScreen.main.bounds.width, height: 120)
+//        layout.minimumLineSpacing = 0
+//        layout.minimumInteritemSpacing = 10
+//        layout.scrollDirection = .vertical
+//        return layout
+
+            let itemSize = NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(1.0),
+                heightDimension: .estimated(120)
+            )
+            let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+            let groupSize = NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(1.0),
+                heightDimension: .estimated(120)
+            )
+            let group = NSCollectionLayoutGroup.vertical(
+                layoutSize: groupSize,
+                subitems: [item]
+            )
+
+            let section = NSCollectionLayoutSection(group: group)
+            section.interGroupSpacing = 10
+            section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+
+            return UICollectionViewCompositionalLayout(section: section)
+
+    }()
+    
+    private lazy var collectionView: UICollectionView = {
+        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        cv.backgroundColor = .systemBackground
+        cv.dataSource = self
+        cv.delegate = self
+        cv.register(CollectionViewCell.self, forCellWithReuseIdentifier: CollectionViewCell.identifier)
+        return cv
+        
+    }()
 
 
     override func viewDidLoad() {
@@ -27,30 +67,23 @@ class ViewController: UIViewController {
     }
     
     private func setUp(){
-        view.addSubview(tableView)
+        view.addSubview(collectionView)
         view.addSubview(stateView)
 
-        tableView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
         stateView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            tableView.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor),
-            tableView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor),
+            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            collectionView.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor),
+            collectionView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor),
             
-            stateView.topAnchor.constraint(equalTo: tableView.topAnchor),
-            stateView.bottomAnchor.constraint(equalTo: tableView.bottomAnchor),
-            stateView.leadingAnchor.constraint(equalTo: tableView.leadingAnchor),
-            stateView.trailingAnchor.constraint(equalTo: tableView.trailingAnchor)
+            stateView.topAnchor.constraint(equalTo: collectionView.topAnchor),
+            stateView.bottomAnchor.constraint(equalTo: collectionView.bottomAnchor),
+            stateView.leadingAnchor.constraint(equalTo: collectionView.leadingAnchor),
+            stateView.trailingAnchor.constraint(equalTo: collectionView.trailingAnchor)
         ])
-        
-        tableView.register(CustomTableViewCell.self, forCellReuseIdentifier: CustomTableViewCell.identifier)
-        tableView.dataSource = self
-        tableView.delegate   = self
-        
-        tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 100
     }
 
     private func setUpSearchController(){
@@ -67,16 +100,31 @@ class ViewController: UIViewController {
         definesPresentationContext = true
     }
     
+//    private func makeFooter(for state: RequestState)-> UIView?{
+//        switch state{
+//        case .loadingNextPage:
+//            return TableFooterView(type: .loading, width: tableView.frame.width)
+//        case .endOfData:
+//            return TableFooterView(type: .endOfData, width: tableView.frame.width)
+//        case .error, .noInternet:
+//            return TableFooterView(type: .retry(action: {[weak self] in
+//                self?.viewModel.fetchImageData()
+//            }), width: tableView.frame.width)
+//        default:
+//            return nil
+//        }
+//    }
+    
     private func makeFooter(for state: RequestState)-> UIView?{
         switch state{
         case .loadingNextPage:
-            return TableFooterView(type: .loading, width: tableView.frame.width)
+            return TableFooterView(type: .loading, width: collectionView.frame.width)
         case .endOfData:
-            return TableFooterView(type: .endOfData, width: tableView.frame.width)
+            return TableFooterView(type: .endOfData, width: collectionView.frame.width)
         case .error, .noInternet:
             return TableFooterView(type: .retry(action: {[weak self] in
                 self?.viewModel.fetchImageData()
-            }), width: tableView.frame.width)
+            }), width: collectionView.frame.width)
         default:
             return nil
         }
@@ -91,30 +139,34 @@ class ViewController: UIViewController {
                 self.stateView.setMessage( "Loading...")
             case .loadingNextPage:
                 self.stateView.hide()
-                self.tableView.tableFooterView = makeFooter(for: .loadingNextPage)
+//                self.tableView.tableFooterView = makeFooter(for: .loadingNextPage)
+           
             case .success:
                 self.stateView.hide()
-                self.tableView.reloadData( )
-                self.tableView.tableFooterView = makeFooter(for: .success)
+                self.collectionView.reloadData()
+//                self.tableView.reloadData( )
+//                self.tableView.tableFooterView = makeFooter(for: .success)
             case .endOfData:
-                self.stateView.hide()
-                self.tableView.tableFooterView = makeFooter(for: .endOfData)
+                break
+//                self.stateView.hide()
+//                self.tableView.tableFooterView = makeFooter(for: .endOfData)
             case .reset:
                 self.stateView.hide()
-                self.tableView.reloadData()
+                self.collectionView.reloadData()
+//                self.tableView.reloadData()
             case .error(let error):
                 if self.viewModel.numberOfRows() == 0{
                     //first page error block screen
                     self.stateView.setMessage("Error: \(error.localizedDescription)", action: .retry)
                 }else{
                     // Pagination error → don’t block
-                    self.tableView.tableFooterView = makeFooter(for: .error(error))
+//                    self.tableView.tableFooterView = makeFooter(for: .error(error))
                 }
             case .noInternet:
                 if self.viewModel.numberOfRows() == 0 {
                     self.stateView.setMessage("No internet connection", action: .retry)
                 } else {
-                    self.tableView.tableFooterView = makeFooter(for: .noInternet)
+//                    self.tableView.tableFooterView = makeFooter(for: .noInternet)
                 }
             }
         }
@@ -131,32 +183,43 @@ class ViewController: UIViewController {
     }
 
 }
-extension ViewController: UITableViewDataSource, UITableViewDelegate{
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int)->Int{
+extension ViewController: UICollectionViewDataSource,  UICollectionViewDelegate{
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return viewModel.numberOfRows()
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)-> UITableViewCell{
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: CustomTableViewCell.identifier, for: indexPath) as? CustomTableViewCell else{
-            fatalError("could not create the cell")
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CollectionViewCell.identifier, for: indexPath) as? CollectionViewCell else {
+           fatalError("could not get the cell")
         }
-
-        cell.config(with: self.viewModel.getCellVM(at: indexPath.row))
+        let info = viewModel.getImageInfo(at: indexPath.row)
+        let vm = CollectionViewCellViewModel(imageInfo: info)
+        cell.configure(with: vm)
         return cell
     }
     
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if indexPath.row == viewModel.numberOfRows() - 5 {
             viewModel.fetchImageData()
         }
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let imageInfo = viewModel.getImageInfo(at: indexPath.row)
-        let detailViewModel = LargeImageViewModel(imageInfo: imageInfo)
-        let vc = LargeImageViewController(viewModel: detailViewModel)
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let imagInfo = viewModel.getImageInfo(at: indexPath.row)
+        let detailVM = LargeImageViewModel(imageInfo: imagInfo)
+        let vc = LargeImageViewController(viewModel: detailVM)
         navigationController?.pushViewController(vc, animated: true)
     }
+}
+extension ViewController: UICollectionViewDelegateFlowLayout {
+    
+//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPAth: IndexPath)-> CGSize{
+////        let padding: CGFloat = 10*3
+////        let availableWidth = collectionView.frame.width - padding
+////        let width = availableWidth / 2
+//        return CGSize(width: collectionView.frame.width,height:.infinity)
+//    }
 }
 extension ViewController: UISearchBarDelegate{
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar){
