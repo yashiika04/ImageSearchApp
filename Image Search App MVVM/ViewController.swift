@@ -8,20 +8,13 @@
 import UIKit
 
 class ViewController: UIViewController {
-    
-    //let tableView  = UITableView()
+
     private let viewModel = ImageListViewModel()
     private let searchController = UISearchController(searchResultsController: nil)
     private let stateView = StateView()
+    private var currentState: RequestState = .reset
     
     private lazy var layout: UICollectionViewLayout = {
-//        let layout = UICollectionViewFlowLayout()
-//        layout.estimatedItemSize = CGSize(width: UIScreen.main.bounds.width, height: 120)
-//        layout.minimumLineSpacing = 0
-//        layout.minimumInteritemSpacing = 10
-//        layout.scrollDirection = .vertical
-//        return layout
-
             let itemSize = NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
                 heightDimension: .estimated(120)
@@ -38,8 +31,21 @@ class ViewController: UIViewController {
             )
 
             let section = NSCollectionLayoutSection(group: group)
+        
+            let footerSize = NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(1.0),
+                heightDimension: .absolute(60)
+            )
+
+            let footer = NSCollectionLayoutBoundarySupplementaryItem(
+                layoutSize: footerSize,
+                elementKind: UICollectionView.elementKindSectionFooter,
+                alignment: .bottom
+            )
+        
             section.interGroupSpacing = 10
             section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+            section.boundarySupplementaryItems = [footer]
 
             return UICollectionViewCompositionalLayout(section: section)
 
@@ -51,6 +57,7 @@ class ViewController: UIViewController {
         cv.dataSource = self
         cv.delegate = self
         cv.register(CollectionViewCell.self, forCellWithReuseIdentifier: CollectionViewCell.identifier)
+        cv.register(CollectionFooterView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: CollectionFooterView.identifier)
         return cv
         
     }()
@@ -100,20 +107,6 @@ class ViewController: UIViewController {
         definesPresentationContext = true
     }
     
-//    private func makeFooter(for state: RequestState)-> UIView?{
-//        switch state{
-//        case .loadingNextPage:
-//            return TableFooterView(type: .loading, width: tableView.frame.width)
-//        case .endOfData:
-//            return TableFooterView(type: .endOfData, width: tableView.frame.width)
-//        case .error, .noInternet:
-//            return TableFooterView(type: .retry(action: {[weak self] in
-//                self?.viewModel.fetchImageData()
-//            }), width: tableView.frame.width)
-//        default:
-//            return nil
-//        }
-//    }
     
     private func makeFooter(for state: RequestState)-> UIView?{
         switch state{
@@ -134,39 +127,35 @@ class ViewController: UIViewController {
         viewModel.onStateChanged = {[weak self] state in
             guard let self else {return}
             
+            currentState = state
+            
             switch state{
             case .initalLoading:
                 self.stateView.setMessage( "Loading...")
             case .loadingNextPage:
                 self.stateView.hide()
-//                self.tableView.tableFooterView = makeFooter(for: .loadingNextPage)
+                self.collectionView.collectionViewLayout.invalidateLayout()
            
             case .success:
                 self.stateView.hide()
-                self.collectionView.reloadData()
-//                self.tableView.reloadData( )
-//                self.tableView.tableFooterView = makeFooter(for: .success)
+                self.collectionView.collectionViewLayout.invalidateLayout()
+
             case .endOfData:
-                break
-//                self.stateView.hide()
-//                self.tableView.tableFooterView = makeFooter(for: .endOfData)
+                self.collectionView.collectionViewLayout.invalidateLayout()
             case .reset:
                 self.stateView.hide()
-                self.collectionView.reloadData()
-//                self.tableView.reloadData()
             case .error(let error):
                 if self.viewModel.numberOfRows() == 0{
                     //first page error block screen
                     self.stateView.setMessage("Error: \(error.localizedDescription)", action: .retry)
                 }else{
-                    // Pagination error → don’t block
-//                    self.tableView.tableFooterView = makeFooter(for: .error(error))
+
                 }
             case .noInternet:
                 if self.viewModel.numberOfRows() == 0 {
                     self.stateView.setMessage("No internet connection", action: .retry)
                 } else {
-//                    self.tableView.tableFooterView = makeFooter(for: .noInternet)
+                    self.collectionView.collectionViewLayout.invalidateLayout()
                 }
             }
         }
@@ -201,7 +190,9 @@ extension ViewController: UICollectionViewDataSource,  UICollectionViewDelegate{
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if indexPath.row == viewModel.numberOfRows() - 5 {
-            viewModel.fetchImageData()
+            DispatchQueue.main.async{
+                self.viewModel.fetchImageData()
+            }
         }
     }
     
@@ -211,15 +202,35 @@ extension ViewController: UICollectionViewDataSource,  UICollectionViewDelegate{
         let vc = LargeImageViewController(viewModel: detailVM)
         navigationController?.pushViewController(vc, animated: true)
     }
-}
-extension ViewController: UICollectionViewDelegateFlowLayout {
     
-//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPAth: IndexPath)-> CGSize{
-////        let padding: CGFloat = 10*3
-////        let availableWidth = collectionView.frame.width - padding
-////        let width = availableWidth / 2
-//        return CGSize(width: collectionView.frame.width,height:.infinity)
-//    }
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        
+        guard kind == UICollectionView.elementKindSectionFooter,
+              let footer = collectionView.dequeueReusableSupplementaryView(
+                    ofKind: kind,
+                    withReuseIdentifier: CollectionFooterView.identifier,
+                    for: indexPath
+              ) as? CollectionFooterView
+        else {
+            return UICollectionReusableView()
+        }
+        
+        switch currentState{
+        case .loadingNextPage:
+            footer.configure(type: .loading)
+        case .endOfData:
+            footer.configure(type: .endOfData)
+        case .error, .noInternet:
+            footer.configure(type: .retry(action: { [weak self] in
+                self?.viewModel.fetchImageData()
+                
+            }))
+        default:
+            footer.isHidden = true
+            
+        }
+        return footer
+    }
 }
 extension ViewController: UISearchBarDelegate{
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar){
