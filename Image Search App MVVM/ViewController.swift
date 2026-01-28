@@ -15,39 +15,39 @@ class ViewController: UIViewController {
     private var currentState: RequestState = .reset
     
     private lazy var layout: UICollectionViewLayout = {
-            let itemSize = NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1.0),
-                heightDimension: .estimated(120)
-            )
-            let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(120)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
 
-            let groupSize = NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1.0),
-                heightDimension: .estimated(120)
-            )
-            let group = NSCollectionLayoutGroup.vertical(
-                layoutSize: groupSize,
-                subitems: [item]
-            )
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(120)
+        )
+        let group = NSCollectionLayoutGroup.vertical(
+            layoutSize: groupSize,
+            subitems: [item]
+        )
 
-            let section = NSCollectionLayoutSection(group: group)
-        
-            let footerSize = NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1.0),
-                heightDimension: .absolute(60)
-            )
+        let section = NSCollectionLayoutSection(group: group)
+    
+        let footerSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(60)
+        )
 
-            let footer = NSCollectionLayoutBoundarySupplementaryItem(
-                layoutSize: footerSize,
-                elementKind: UICollectionView.elementKindSectionFooter,
-                alignment: .bottom
-            )
-        
-            section.interGroupSpacing = 10
-            section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
-            section.boundarySupplementaryItems = [footer]
+        let footer = NSCollectionLayoutBoundarySupplementaryItem(
+            layoutSize: footerSize,
+            elementKind: UICollectionView.elementKindSectionFooter,
+            alignment: .bottom
+        )
+    
+        section.interGroupSpacing = 10
+        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+        section.boundarySupplementaryItems = [footer]
 
-            return UICollectionViewCompositionalLayout(section: section)
+        return UICollectionViewCompositionalLayout(section: section)
 
     }()
     
@@ -107,55 +107,62 @@ class ViewController: UIViewController {
         definesPresentationContext = true
     }
     
-    
-    private func makeFooter(for state: RequestState)-> UIView?{
-        switch state{
-        case .loadingNextPage:
-            return TableFooterView(type: .loading, width: collectionView.frame.width)
-        case .endOfData:
-            return TableFooterView(type: .endOfData, width: collectionView.frame.width)
-        case .error, .noInternet:
-            return TableFooterView(type: .retry(action: {[weak self] in
-                self?.viewModel.fetchImageData()
-            }), width: collectionView.frame.width)
-        default:
-            return nil
-        }
-    }
-    
     private func bindViewModel(){
         viewModel.onStateChanged = {[weak self] state in
             guard let self else {return}
             
             currentState = state
+            print(currentState)
             
             switch state{
             case .initalLoading:
                 self.stateView.setMessage( "Loading...")
+                
             case .loadingNextPage:
                 self.stateView.hide()
-                self.collectionView.collectionViewLayout.invalidateLayout()
-           
+             //   self.updateFooterVisibility(type: .loading)
+                self.collectionView.reloadSections(IndexSet(integer: 0))
+//                self.collectionView.reloadData()
+                
             case .success:
                 self.stateView.hide()
-                self.collectionView.collectionViewLayout.invalidateLayout()
-
+                self.collectionView.reloadData()
+         
             case .endOfData:
-                self.collectionView.collectionViewLayout.invalidateLayout()
+                self.stateView.hide()
+//                self.updateFooterVisibility(type: .endOfData)
+                self.collectionView.reloadSections(IndexSet(integer: 0))
+//                self.collectionView.reloadData()
+        
             case .reset:
                 self.stateView.hide()
+                self.collectionView.reloadData()
+
             case .error(let error):
+                print("entered the block")
                 if self.viewModel.numberOfRows() == 0{
                     //first page error block screen
+                    print("yashika \(viewModel.numberOfRows())")
                     self.stateView.setMessage("Error: \(error.localizedDescription)", action: .retry)
                 }else{
-
+                    print("debuging the footer issue")
+//                    self.updateFooterVisibility(type: .retry(action: {[weak self] in
+//                        self?.viewModel.fetchImageData()
+//                    }))
+                    self.collectionView.reloadSections(IndexSet(integer: 0))
+//                    self.collectionView.reloadData()
                 }
+            
             case .noInternet:
                 if self.viewModel.numberOfRows() == 0 {
+                    print("yashiika04 \(self.viewModel.numberOfRows())")
                     self.stateView.setMessage("No internet connection", action: .retry)
                 } else {
-                    self.collectionView.collectionViewLayout.invalidateLayout()
+//                    self.updateFooterVisibility(type: .retry(action: {[weak self] in
+//                        self?.viewModel.fetchImageData()
+//                    }))
+                    self.collectionView.reloadSections(IndexSet(integer: 0))
+//                    self.collectionView.reloadData()
                 }
             }
         }
@@ -190,8 +197,13 @@ extension ViewController: UICollectionViewDataSource,  UICollectionViewDelegate{
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if indexPath.row == viewModel.numberOfRows() - 5 {
-            DispatchQueue.main.async{
-                self.viewModel.fetchImageData()
+            switch currentState {
+            case .error, .noInternet, .endOfData:
+                return
+            default:
+                DispatchQueue.main.async{
+                    self.viewModel.fetchImageData()
+                }
             }
         }
     }
@@ -214,19 +226,22 @@ extension ViewController: UICollectionViewDataSource,  UICollectionViewDelegate{
         else {
             return UICollectionReusableView()
         }
-        
+        print("yashika: loadingNextPage: entering the block")
         switch currentState{
         case .loadingNextPage:
+            print("yashika_01")
             footer.configure(type: .loading)
         case .endOfData:
             footer.configure(type: .endOfData)
         case .error, .noInternet:
+            print("yashika_error")
             footer.configure(type: .retry(action: { [weak self] in
                 self?.viewModel.fetchImageData()
                 
             }))
         default:
-            footer.isHidden = true
+            print("configuring none")
+            footer.configure(type: .none)
             
         }
         return footer

@@ -8,6 +8,7 @@
 import UIKit
 
 enum FooterType{
+    case none
     case loading
     case endOfData
     case retry (action: ()->Void)
@@ -60,7 +61,12 @@ class TableFooterView: UIView {
         retryAction = nil
         spinner.isHidden = true
         
+        print(type)
+        
         switch type{
+        case .none:
+            spinner.stopAnimating( )
+            label.isHidden = true
         case .loading:
             spinner.startAnimating( )
             spinner.isHidden = false
@@ -68,6 +74,8 @@ class TableFooterView: UIView {
         case .endOfData:
             label.text = "No more data to load"
         case .retry(action: let action):
+            print("into retry config for adding label")
+            label.isHidden = false
             label.text = "Tap to retry"
             label.textColor = .systemBlue
             retryAction = action

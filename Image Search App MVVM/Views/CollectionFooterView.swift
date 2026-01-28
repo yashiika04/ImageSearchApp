@@ -11,23 +11,32 @@ class CollectionFooterView: UICollectionReusableView {
     
     static let identifier = "CollectionFooterView"
     
-    private var footerView: TableFooterView?
-
-    func configure(type: FooterType) {
-        footerView?.removeFromSuperview()
-
-        let view = TableFooterView(type: type, width: bounds.width)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(view)
-
+    private let footerView = TableFooterView(type: .loading, width: 0)
+    
+    override init(frame: CGRect){
+        super.init(frame: frame)
+        setup()
+    }
+    
+    required init?(coder: NSCoder){
+        fatalError("storyboard not set up")
+    }
+    
+    private func setup(){
+        footerView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(footerView)
+        
         NSLayoutConstraint.activate([
-            view.topAnchor.constraint(equalTo: topAnchor),
-            view.bottomAnchor.constraint(equalTo: bottomAnchor),
-            view.leadingAnchor.constraint(equalTo: leadingAnchor),
-            view.trailingAnchor.constraint(equalTo: trailingAnchor)
+            footerView.topAnchor.constraint(equalTo: topAnchor),
+            footerView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            footerView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            footerView.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
-
-        footerView = view
+    }
+    
+    func configure(type: FooterType){
+        print("configuring ther footer")
+        footerView.configure(type: type)
     }
 }
 
