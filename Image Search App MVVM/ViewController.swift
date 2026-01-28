@@ -178,6 +178,18 @@ class ViewController: UIViewController {
         let newLayout = (layoutMode == .list) ? makeListLayout() : makeGridLayout()
         collectionView.setCollectionViewLayout(newLayout, animated: true)
         collectionView.reloadData()
+        
+        // Force visible cells to update their internal UI immediately
+        for cell in collectionView.visibleCells {
+            if let imageCell = cell as? CollectionViewCell,
+               let indexPath = collectionView.indexPath(for: imageCell) {
+                let info = viewModel.getImageInfo(at: indexPath.row)
+                let vm = CollectionViewCellViewModel(imageInfo: info)
+                
+                // Re-configure the visible cell manually to hide/show labels
+                imageCell.configure(with: vm, isGrid: layoutMode == .grid)
+            }
+        }
     }
     
     
