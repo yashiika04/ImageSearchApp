@@ -112,7 +112,6 @@ class ViewController: UIViewController {
             guard let self else {return}
             
             currentState = state
-            print(currentState)
             
             switch state{
             case .initalLoading:
@@ -120,9 +119,7 @@ class ViewController: UIViewController {
                 
             case .loadingNextPage:
                 self.stateView.hide()
-             //   self.updateFooterVisibility(type: .loading)
                 self.collectionView.reloadSections(IndexSet(integer: 0))
-//                self.collectionView.reloadData()
                 
             case .success:
                 self.stateView.hide()
@@ -130,39 +127,24 @@ class ViewController: UIViewController {
          
             case .endOfData:
                 self.stateView.hide()
-//                self.updateFooterVisibility(type: .endOfData)
                 self.collectionView.reloadSections(IndexSet(integer: 0))
-//                self.collectionView.reloadData()
         
             case .reset:
                 self.stateView.hide()
                 self.collectionView.reloadData()
 
             case .error(let error):
-                print("entered the block")
                 if self.viewModel.numberOfRows() == 0{
-                    //first page error block screen
-                    print("yashika \(viewModel.numberOfRows())")
                     self.stateView.setMessage("Error: \(error.localizedDescription)", action: .retry)
                 }else{
-                    print("debuging the footer issue")
-//                    self.updateFooterVisibility(type: .retry(action: {[weak self] in
-//                        self?.viewModel.fetchImageData()
-//                    }))
                     self.collectionView.reloadSections(IndexSet(integer: 0))
-//                    self.collectionView.reloadData()
                 }
             
             case .noInternet:
                 if self.viewModel.numberOfRows() == 0 {
-                    print("yashiika04 \(self.viewModel.numberOfRows())")
                     self.stateView.setMessage("No internet connection", action: .retry)
                 } else {
-//                    self.updateFooterVisibility(type: .retry(action: {[weak self] in
-//                        self?.viewModel.fetchImageData()
-//                    }))
                     self.collectionView.reloadSections(IndexSet(integer: 0))
-//                    self.collectionView.reloadData()
                 }
             }
         }
@@ -226,23 +208,17 @@ extension ViewController: UICollectionViewDataSource,  UICollectionViewDelegate{
         else {
             return UICollectionReusableView()
         }
-        print("yashika: loadingNextPage: entering the block")
         switch currentState{
         case .loadingNextPage:
-            print("yashika_01")
             footer.configure(type: .loading)
         case .endOfData:
             footer.configure(type: .endOfData)
         case .error, .noInternet:
-            print("yashika_error")
             footer.configure(type: .retry(action: { [weak self] in
                 self?.viewModel.fetchImageData()
-                
             }))
         default:
-            print("configuring none")
             footer.configure(type: .none)
-            
         }
         return footer
     }

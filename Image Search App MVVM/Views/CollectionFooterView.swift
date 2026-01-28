@@ -35,7 +35,6 @@ class CollectionFooterView: UICollectionReusableView {
     }
     
     func configure(type: FooterType){
-        print("configuring ther footer")
         footerView.configure(type: type)
     }
 }

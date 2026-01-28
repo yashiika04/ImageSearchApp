@@ -61,8 +61,6 @@ class TableFooterView: UIView {
         retryAction = nil
         spinner.isHidden = true
         
-        print(type)
-        
         switch type{
         case .none:
             spinner.stopAnimating( )
@@ -74,7 +72,6 @@ class TableFooterView: UIView {
         case .endOfData:
             label.text = "No more data to load"
         case .retry(action: let action):
-            print("into retry config for adding label")
             label.isHidden = false
             label.text = "Tap to retry"
             label.textColor = .systemBlue
