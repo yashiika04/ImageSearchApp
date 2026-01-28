@@ -7,14 +7,102 @@
 
 import UIKit
 
+enum layoutMode{
+    case list
+    case grid
+}
+
 class ViewController: UIViewController {
 
     private let viewModel = ImageListViewModel()
     private let searchController = UISearchController(searchResultsController: nil)
     private let stateView = StateView()
-    private var currentState: RequestState = .reset
     
-    private lazy var layout: UICollectionViewLayout = {
+    private var currentState: RequestState = .reset
+    private var layoutMode: layoutMode = .list
+    
+    private lazy var listLayout = makeListLayout()
+    private lazy var gridLayout = makeGridLayout()
+    
+    private lazy var collectionView: UICollectionView = {
+        let cv = UICollectionView(frame: .zero, collectionViewLayout: listLayout)
+        cv.backgroundColor = .systemBackground
+        cv.dataSource = self
+        cv.delegate = self
+        cv.register(CollectionViewCell.self, forCellWithReuseIdentifier: CollectionViewCell.identifier)
+        cv.register(CollectionFooterView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: CollectionFooterView.identifier)
+        return cv
+        
+    }()
+    
+    private let toggleButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "square.grid.2x2"), for: .normal)
+        button.tintColor = .white
+        button.backgroundColor = .systemBlue
+        button.layer.cornerRadius = 28
+        return button
+    }()
+
+    // MARK: - Life cycle
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setUp()
+        setUpSearchController()
+        
+        bindViewModel()
+
+        viewModel.fetchImageData()
+    }
+    
+    // MARK: - Setup
+    
+    private func setUp(){
+        view.addSubview(collectionView)
+        view.addSubview(stateView)
+        view.addSubview(toggleButton)
+
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        stateView.translatesAutoresizingMaskIntoConstraints = false
+        toggleButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            collectionView.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor),
+            collectionView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor),
+            
+            stateView.topAnchor.constraint(equalTo: collectionView.topAnchor),
+            stateView.bottomAnchor.constraint(equalTo: collectionView.bottomAnchor),
+            stateView.leadingAnchor.constraint(equalTo: collectionView.leadingAnchor),
+            stateView.trailingAnchor.constraint(equalTo: collectionView.trailingAnchor),
+            
+            toggleButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            toggleButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            toggleButton.widthAnchor.constraint(equalToConstant: 56),
+            toggleButton.heightAnchor.constraint(equalToConstant: 56)
+        ])
+        toggleButton.addTarget(self, action: #selector(toggleLayoutMode), for: .touchUpInside)
+    }
+
+    private func setUpSearchController(){
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Images"
+        searchController.searchBar.searchTextField.textColor = .white
+        searchController.searchBar.searchTextField.backgroundColor = .secondarySystemBackground
+        
+        searchController.searchBar.delegate = self
+        
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+        
+        definesPresentationContext = true
+    }
+    
+    // MARK: - Layout Builders
+    
+    private func makeListLayout()-> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
             heightDimension: .estimated(120)
@@ -32,6 +120,44 @@ class ViewController: UIViewController {
 
         let section = NSCollectionLayoutSection(group: group)
     
+        section.interGroupSpacing = 10
+        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+        
+        let footer = makeFooter()
+        section.boundarySupplementaryItems = [footer]
+
+        return UICollectionViewCompositionalLayout(section: section)
+    }
+    
+    private func makeGridLayout()-> UICollectionViewLayout {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(0.5),
+            heightDimension: .estimated(120)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(120)
+        )
+        let group = NSCollectionLayoutGroup.horizontal(
+            layoutSize: groupSize,
+            subitems: [item, item]
+        )
+        group.interItemSpacing = .fixed(8)
+
+        let section = NSCollectionLayoutSection(group: group)
+    
+        section.interGroupSpacing = 10
+        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+        
+        let footer = makeFooter()
+        section.boundarySupplementaryItems = [footer]
+
+        return UICollectionViewCompositionalLayout(section: section)
+    }
+    
+    private func makeFooter()-> NSCollectionLayoutBoundarySupplementaryItem{
         let footerSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
             heightDimension: .absolute(60)
@@ -42,70 +168,20 @@ class ViewController: UIViewController {
             elementKind: UICollectionView.elementKindSectionFooter,
             alignment: .bottom
         )
-    
-        section.interGroupSpacing = 10
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
-        section.boundarySupplementaryItems = [footer]
-
-        return UICollectionViewCompositionalLayout(section: section)
-
-    }()
-    
-    private lazy var collectionView: UICollectionView = {
-        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        cv.backgroundColor = .systemBackground
-        cv.dataSource = self
-        cv.delegate = self
-        cv.register(CollectionViewCell.self, forCellWithReuseIdentifier: CollectionViewCell.identifier)
-        cv.register(CollectionFooterView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: CollectionFooterView.identifier)
-        return cv
         
-    }()
-
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setUp()
-        setUpSearchController()
-        
-        bindViewModel()
-
-        viewModel.fetchImageData()
+        return footer
     }
     
-    private func setUp(){
-        view.addSubview(collectionView)
-        view.addSubview(stateView)
-
-        collectionView.translatesAutoresizingMaskIntoConstraints = false
-        stateView.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            collectionView.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor),
-            collectionView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor),
-            
-            stateView.topAnchor.constraint(equalTo: collectionView.topAnchor),
-            stateView.bottomAnchor.constraint(equalTo: collectionView.bottomAnchor),
-            stateView.leadingAnchor.constraint(equalTo: collectionView.leadingAnchor),
-            stateView.trailingAnchor.constraint(equalTo: collectionView.trailingAnchor)
-        ])
+    // MARK: - Toggle
+    @objc private func toggleLayoutMode(){
+        layoutMode = (layoutMode == .list) ? .grid : .list
+        let newLayout = (layoutMode == .list) ? makeListLayout() : makeGridLayout()
+        collectionView.setCollectionViewLayout(newLayout, animated: true)
+        collectionView.reloadData()
     }
-
-    private func setUpSearchController(){
-        searchController.obscuresBackgroundDuringPresentation = false
-        searchController.searchBar.placeholder = "Search Images"
-        searchController.searchBar.searchTextField.textColor = .white
-        searchController.searchBar.searchTextField.backgroundColor = .secondarySystemBackground
-        
-        searchController.searchBar.delegate = self
-        
-        navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = false
-        
-        definesPresentationContext = true
-    }
+    
+    
+    // MARK: - ViewModel Binding
     
     private func bindViewModel(){
         viewModel.onStateChanged = {[weak self] state in
@@ -173,7 +249,7 @@ extension ViewController: UICollectionViewDataSource,  UICollectionViewDelegate{
         }
         let info = viewModel.getImageInfo(at: indexPath.row)
         let vm = CollectionViewCellViewModel(imageInfo: info)
-        cell.configure(with: vm)
+        cell.configure(with: vm, isGrid: layoutMode == .grid)
         return cell
     }
     

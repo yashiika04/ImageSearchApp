@@ -47,6 +47,10 @@ class CollectionViewCell: UICollectionViewCell {
         return spinner
     }()
     
+    //constraint sets
+    private var listConstraints: [NSLayoutConstraint] = []
+    private var gridConstraints: [NSLayoutConstraint] = []
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -62,17 +66,18 @@ class CollectionViewCell: UICollectionViewCell {
         
         contentView.addSubview(imageView)
         contentView.addSubview(labelsStackView)
+        contentView.addSubview(loader)
         
         imageView.translatesAutoresizingMaskIntoConstraints = false
         labelsStackView.translatesAutoresizingMaskIntoConstraints = false
+        loader.translatesAutoresizingMaskIntoConstraints = false
         
-        NSLayoutConstraint.activate([
-
-            // Image on left
+        // LIST MODE
+        listConstraints = [
             imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
             imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             imageView.widthAnchor.constraint(equalToConstant: 100),
-            imageView.heightAnchor.constraint(equalToConstant: 100),
+            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: 100),
 
             // Text on right
             labelsStackView.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 12),
@@ -82,21 +87,49 @@ class CollectionViewCell: UICollectionViewCell {
 
             // Allow cell to be at least image height
             imageView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -8)
+        ]
+        
+        // GRID MODE
+        gridConstraints = [
+            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        ]
+        
+        NSLayoutConstraint.activate([
+            loader.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            loader.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
         ])
-
+        
+        NSLayoutConstraint.activate(listConstraints)
     }
     
     override func prepareForReuse() {
         super.prepareForReuse()
         imageView.image = nil
         
+        labelsStackView.isHidden = false
+        
+//        NSLayoutConstraint.deactivate(gridConstraints)
+//        NSLayoutConstraint.activate(listConstraints)
+        
     }
     
-    func configure(with viewModel: CollectionViewCellViewModel){
+    func configure(with viewModel: CollectionViewCellViewModel, isGrid: Bool){
         self.viewModel = viewModel
         
         descriptionLabel.text = viewModel.descriptionText
         likesLabel.text = viewModel.likesText
+        labelsStackView.isHidden = isGrid
+        
+        if isGrid{
+            NSLayoutConstraint.deactivate(listConstraints)
+            NSLayoutConstraint.activate(gridConstraints)
+        }else{
+            NSLayoutConstraint.deactivate(gridConstraints)
+            NSLayoutConstraint.activate(listConstraints)
+        }
         
         loader.startAnimating()
             
