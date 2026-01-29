@@ -17,7 +17,18 @@ enum RequestState {
     case reset
 }
 
-class ImageListViewModel {
+protocol ImageListViewModelProtocol: AnyObject{
+    var onStateChanged: ((RequestState)->Void)? {get set}
+    
+    func fetchImageData()
+    func search(_ query: String)
+    
+    func numberOfRows()-> Int
+    func getImageInfo(at index: Int) -> ImageInfo
+    func getCellVM(at index: Int) -> CustomCellViewModel
+}
+
+class ImageListViewModel: ImageListViewModelProtocol {
     
     private var imageData: [ImageInfo] = []
     private var currentDataTask: URLSessionDataTask?

@@ -10,7 +10,7 @@ import UIKit
 class CollectionViewCell: UICollectionViewCell {
     
     static let identifier = "CollectionViewCell"
-    private var viewModel: CollectionViewCellViewModel?
+    private var viewModel: CollectionViewCellViewModelProtocol?
     
     private let imageView: UIImageView = {
         let imageView = UIImageView()
@@ -116,7 +116,7 @@ class CollectionViewCell: UICollectionViewCell {
         
     }
     
-    func configure(with viewModel: CollectionViewCellViewModel, isGrid: Bool){
+    func configure(with viewModel: CollectionViewCellViewModelProtocol, isGrid: Bool){
         self.viewModel = viewModel
         
         descriptionLabel.text = viewModel.descriptionText

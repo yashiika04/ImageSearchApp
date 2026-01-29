@@ -8,7 +8,15 @@
 import Foundation
 import UIKit
 
-class LargeImageViewModel {
+protocol LargeImageViewModelProtocol: AnyObject {
+    var largeImageUrl: URL { get }
+    var descriptionText: String { get }
+    var likeText: String { get }
+        
+    func loadImage(completion: @escaping (UIImage?) -> Void)
+}
+
+class LargeImageViewModel: LargeImageViewModelProtocol{
     
     let largeImageUrl: URL
     let descriptionText : String

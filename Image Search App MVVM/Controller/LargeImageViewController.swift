@@ -9,7 +9,7 @@ import UIKit
 
 class LargeImageViewController: UIViewController {
     
-    private let viewModel: LargeImageViewModel
+    private let viewModel: LargeImageViewModelProtocol
     
     private let imageView: UIImageView = {
         let iv = UIImageView()
@@ -36,7 +36,7 @@ class LargeImageViewController: UIViewController {
         return spinner
     }()
     
-    init(viewModel: LargeImageViewModel){
+    init(viewModel: LargeImageViewModelProtocol){
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }

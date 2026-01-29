@@ -14,7 +14,8 @@ enum layoutMode{
 
 class ViewController: UIViewController {
 
-    private let viewModel = ImageListViewModel()
+    private let viewModel: ImageListViewModelProtocol
+    
     private let searchController = UISearchController(searchResultsController: nil)
     private let stateView = StateView()
     
@@ -44,6 +45,15 @@ class ViewController: UIViewController {
         return button
     }()
 
+    init(viewModel: ImageListViewModelProtocol = ImageListViewModel()){
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     // MARK: - Life cycle
     
     override func viewDidLoad() {

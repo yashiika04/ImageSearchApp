@@ -8,7 +8,15 @@
 import Foundation
 import UIKit
 
-class CollectionViewCellViewModel {
+protocol CollectionViewCellViewModelProtocol: AnyObject{
+    var url: URL { get }
+    var imageInfo: ImageInfo { get }
+    
+    var descriptionText: String { get }
+    var likesText: String { get }
+}
+
+class CollectionViewCellViewModel: CollectionViewCellViewModelProtocol{
     let imageInfo: ImageInfo
     let url: URL
     
