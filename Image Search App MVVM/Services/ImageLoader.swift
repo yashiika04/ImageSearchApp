@@ -7,7 +7,12 @@
 
 import UIKit
 
-final class ImageLoader {
+protocol ImageLoaderProtocol: AnyObject{
+    func loadImage(from url: URL, completion: @escaping (UIImage?, URL)->Void)
+    func cancelAll()
+}
+
+final class ImageLoader: ImageLoaderProtocol{
     
     static let shared = ImageLoader()
     

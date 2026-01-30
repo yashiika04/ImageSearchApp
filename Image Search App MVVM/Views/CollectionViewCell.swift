@@ -14,7 +14,7 @@ class CollectionViewCell: UICollectionViewCell {
     
     private let imageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
+        imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         return imageView
     }()
@@ -116,7 +116,7 @@ class CollectionViewCell: UICollectionViewCell {
         
     }
     
-    func configure(with viewModel: CollectionViewCellViewModelProtocol, isGrid: Bool){
+    func configure(with viewModel: CollectionViewCellViewModelProtocol, isGrid: Bool, imageLoader: ImageLoaderProtocol = ImageLoader.shared){
         self.viewModel = viewModel
         
         descriptionLabel.text = viewModel.descriptionText
@@ -133,7 +133,7 @@ class CollectionViewCell: UICollectionViewCell {
         
         loader.startAnimating()
             
-        ImageLoader.shared.loadImage(from: viewModel.url) { [weak self] image, url in
+        imageLoader.loadImage(from: viewModel.url) { [weak self] image, url in
             guard let self else {return}
             if self.viewModel?.imageInfo.previewURL == url {
                 self.loader.stopAnimating()

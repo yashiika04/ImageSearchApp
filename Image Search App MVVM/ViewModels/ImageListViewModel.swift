@@ -18,17 +18,20 @@ enum RequestState {
 }
 
 protocol ImageListViewModelProtocol: AnyObject{
-    var onStateChanged: ((RequestState)->Void)? {get set}
+    var onStateChanged: ((RequestState) -> Void)? { get set }
     
     func fetchImageData()
     func search(_ query: String)
     
-    func numberOfRows()-> Int
+    func numberOfRows() -> Int
     func getImageInfo(at index: Int) -> ImageInfo
     func getCellVM(at index: Int) -> CustomCellViewModel
 }
 
 class ImageListViewModel: ImageListViewModelProtocol {
+    
+    private var imageLoader: ImageLoaderProtocol
+    private var imageListLoader: ImageListLoaderProtocol
     
     private var imageData: [ImageInfo] = []
     private var currentDataTask: URLSessionDataTask?
@@ -37,97 +40,65 @@ class ImageListViewModel: ImageListViewModelProtocol {
     private var isFetching: Bool = false
     private var hasMoreData: Bool = true
     private var currentQuery: String = "yellow flowers" //default
+    
     var onStateChanged: ((RequestState)->Void)?
     
-    func fetchImageData(){
-        
-        guard !isFetching && hasMoreData else{
+    init(imageLoader: ImageLoaderProtocol = ImageLoader.shared, imageListLoader: ImageListLoaderProtocol = ImageListLoader()){
+        self.imageLoader = imageLoader
+        self.imageListLoader = imageListLoader
+    }
+    
+    func fetchImageData() {
+        guard !isFetching && hasMoreData else {
             return
         }
         
         isFetching = true
-        if (currentPage == 1){
+        if (currentPage == 1) {
             onStateChanged?(.initalLoading)
-        }else{
+        } else {
             onStateChanged?(.loadingNextPage)
         }
-    
         
-        let encodedQuery = currentQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-
-        let urlString = """
-        https://pixabay.com/api/?key=45834665-cd812607af12ca3f1bd5d4c19&q=\(encodedQuery)&image_type=photo&pretty=true&safesearch=true&per_page=50&page=\(currentPage)
-        """
-
-        guard
-            let url = URL(string: urlString)
-        else {
-            isFetching = false
-            onStateChanged?(.error(NSError(domain: "invalid url", code: 0)))
-            return
-        }
-    
-        currentDataTask = URLSession.shared.dataTask(with: url){ data, response, error in
-         
-            if let error {
-                print("encountered an error: ", error)
-                DispatchQueue.main.async{
-                    self.isFetching = false
-                    self.onStateChanged?(.error(error))
-                   
-                }
-                return
-            }
+        imageListLoader.fetchImageList(for: currentQuery, page: currentPage) { [weak self] result in
+            guard let self else { return }
             
-            guard let data else{
-                print("could not get data")
-                DispatchQueue.main.async{
-                    self.isFetching = false
-                    self.onStateChanged?(.error(NSError(domain: "invalid data", code: 0)))
-               
-                }
-                return
-            }
-            
-            guard
-                let httpResponse = response as? HTTPURLResponse,
-                200..<300 ~= httpResponse.statusCode
-            else {
-                DispatchQueue.main.sync{
-                    self.hasMoreData = false
-                    self.onStateChanged?(.endOfData)
-                }
-                return
-            }
-            
-            do{
-                let response = try JSONDecoder().decode(ImageApiResponse.self, from: data)
-                let images = response.hits
+            DispatchQueue.main.async {
                 
-                DispatchQueue.main.async{
-                    if images.isEmpty {
+                
+                
+                self.isFetching = false
+                
+                switch result {
+                case .success(let response):
+                    if response.hits.isEmpty {
                         self.hasMoreData = false
-                        self.isFetching = false
                         self.onStateChanged?(.endOfData)
-                    }else{
-                        self.imageData.append(contentsOf: images)
+                    } else {
+                        self.imageData.append(contentsOf: response.hits)
                         self.currentPage += 1
+                        self.onStateChanged?(.success)
                     }
-                    
-                    self.isFetching = false
-                    self.onStateChanged?(.success)
-                }
+                case .failure(let error):
+                    switch error {
+                    case .endOfData:
+                        self.hasMoreData = false
+                        self.onStateChanged?(.endOfData)
+                        
+                    case .noInternet:
+                        self.onStateChanged?(.noInternet)
+                        
+                    case .error(let error):
+                        self.onStateChanged?(.error(error))
+                    }
+                } // <--- You were likely missing this brace to close 'switch result'
                 
-            }catch{
-                DispatchQueue.main.async{
-                    self.isFetching = false
-                    self.onStateChanged?(.error(error))
-                }
-                print(error)
-            }
-        }
-        currentDataTask?.resume()
+                
+                
+            } // <--- This closes 'DispatchQueue.main.async'
+        } // <--- This closes the 'fetchImageList' closure
     }
+    
 
     func search(_ query: String) {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -136,8 +107,8 @@ class ImageListViewModel: ImageListViewModelProtocol {
         }
         
         //cancel previous url data task
-        currentDataTask?.cancel()
-        ImageLoader.shared.cancelAll()
+        imageListLoader.cancel()
+        imageLoader.cancelAll()
         
         currentQuery = trimmed
         

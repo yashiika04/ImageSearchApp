@@ -11,7 +11,18 @@ enum StateViewAction{
     case retry
 }
 
-class StateView: UIView {
+protocol StateViewProtocol: AnyObject{
+    var onActionTapped: ((StateViewAction)->Void)? {get set}
+    func setMessage(_ text: String, action: StateViewAction?)
+    func hide()
+}
+extension StateViewProtocol {
+    func setMessage(_ text: String) {
+        setMessage(text, action: nil)
+    }
+}
+
+class StateView: UIView, StateViewProtocol{
     
     private let label: UILabel = {
         let label = UILabel()

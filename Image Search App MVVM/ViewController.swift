@@ -15,9 +15,11 @@ enum layoutMode{
 class ViewController: UIViewController {
 
     private let viewModel: ImageListViewModelProtocol
+    private let imageLoader: ImageLoaderProtocol
+    private let stateView: (UIView & StateViewProtocol)
+
     
     private let searchController = UISearchController(searchResultsController: nil)
-    private let stateView = StateView()
     
     private var currentState: RequestState = .reset
     private var layoutMode: layoutMode = .list
@@ -45,8 +47,10 @@ class ViewController: UIViewController {
         return button
     }()
 
-    init(viewModel: ImageListViewModelProtocol = ImageListViewModel()){
+    init(viewModel: ImageListViewModelProtocol = ImageListViewModel(), imageLoader: ImageLoaderProtocol = ImageLoader.shared, stateView: (UIView & StateViewProtocol) = StateView()){
         self.viewModel = viewModel
+        self.imageLoader = imageLoader
+        self.stateView = stateView
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -271,7 +275,7 @@ extension ViewController: UICollectionViewDataSource,  UICollectionViewDelegate{
         }
         let info = viewModel.getImageInfo(at: indexPath.row)
         let vm = CollectionViewCellViewModel(imageInfo: info)
-        cell.configure(with: vm, isGrid: layoutMode == .grid)
+        cell.configure(with: vm, isGrid: layoutMode == .grid, imageLoader: imageLoader)
         return cell
     }
     

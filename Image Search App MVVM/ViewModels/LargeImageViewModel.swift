@@ -18,18 +18,21 @@ protocol LargeImageViewModelProtocol: AnyObject {
 
 class LargeImageViewModel: LargeImageViewModelProtocol{
     
+    private var imageLoader: ImageLoaderProtocol
+    
     let largeImageUrl: URL
     let descriptionText : String
     let likeText : String
     
-    init(imageInfo: ImageInfo) {
+    init(imageInfo: ImageInfo, imageLoader: ImageLoaderProtocol = ImageLoader.shared) {
         self.largeImageUrl = imageInfo.largeImageURL
         self.descriptionText = imageInfo.tags
         self.likeText = "\(imageInfo.likes) likes"
+        self.imageLoader = imageLoader
     }
     
     func loadImage(completion: @escaping (UIImage?) -> Void){
-            ImageLoader.shared.loadImage(from: largeImageUrl) { image, _ in
+            imageLoader.loadImage(from: largeImageUrl) { image, _ in
                 completion(image)
             }
         }
