@@ -63,10 +63,7 @@ class ImageListViewModel: ImageListViewModelProtocol {
         imageListLoader.fetchImageList(for: currentQuery, page: currentPage) { [weak self] result in
             guard let self else { return }
             
-            DispatchQueue.main.async {
-                
-                
-                
+            DispatchQueue.main.async {  
                 self.isFetching = false
                 
                 switch result {
@@ -91,12 +88,9 @@ class ImageListViewModel: ImageListViewModelProtocol {
                     case .error(let error):
                         self.onStateChanged?(.error(error))
                     }
-                } // <--- You were likely missing this brace to close 'switch result'
-                
-                
-                
-            } // <--- This closes 'DispatchQueue.main.async'
-        } // <--- This closes the 'fetchImageList' closure
+                }
+            }
+        }
     }
     
 

@@ -19,6 +19,24 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: windowScene)
         
+        
+        // For mocking use this view controller
+/*
+        let mockListLoader = MockImageListLoader()
+        let mockImageLoader = MockImageLoader()
+
+        let viewModel = ImageListViewModel(
+            imageListLoader: mockListLoader
+        )
+     
+        let vc = ViewController(
+            viewModel: viewModel,
+            imageLoader: mockImageLoader
+        )
+*/
+        
+        
+        
         let vc = ViewController()
         let nav = UINavigationController(rootViewController: vc)
         

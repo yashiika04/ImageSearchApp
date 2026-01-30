@@ -68,8 +68,10 @@ class TableFooterView: UIView {
         case .loading:
             spinner.startAnimating( )
             spinner.isHidden = false
+            label.isHidden = false
             label.text = "Loading..."
         case .endOfData:
+            label.isHidden = false
             label.text = "No more data to load"
         case .retry(action: let action):
             label.isHidden = false
@@ -87,9 +89,4 @@ class TableFooterView: UIView {
     @objc private func didTapRetry(){
         retryAction?()
     }
-    
-    
-    
-    
-
 }
