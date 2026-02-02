@@ -46,10 +46,12 @@ class ViewController: UIViewController {
         button.layer.cornerRadius = 28
         return button
     }()
-
-    init(viewModel: ImageListViewModelProtocol = ImageListViewModel(), imageLoader: ImageLoaderProtocol = ImageLoader.shared, stateView: (UIView & StateViewProtocol) = StateView()){
+    
+    // MARK: - Life cycle
+    init(viewModel: ImageListViewModelProtocol,
+         stateView: (UIView & StateViewProtocol)) {
         self.viewModel = viewModel
-        self.imageLoader = imageLoader
+        self.imageLoader = viewModel.imageLoader
         self.stateView = stateView
         super.init(nibName: nil, bundle: nil)
     }
@@ -71,7 +73,6 @@ class ViewController: UIViewController {
     }
     
     // MARK: - Setup
-    
     private func setUp(){
         view.addSubview(collectionView)
         view.addSubview(stateView)
@@ -101,6 +102,7 @@ class ViewController: UIViewController {
     }
 
     private func setUpSearchController(){
+        
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search Images"
         searchController.searchBar.searchTextField.textColor = .white
@@ -115,7 +117,6 @@ class ViewController: UIViewController {
     }
     
     // MARK: - Layout Builders
-    
     private func makeListLayout()-> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -293,10 +294,7 @@ extension ViewController: UICollectionViewDataSource,  UICollectionViewDelegate{
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let imagInfo = viewModel.getImageInfo(at: indexPath.row)
-        let detailVM = LargeImageViewModel(imageInfo: imagInfo)
-        let vc = LargeImageViewController(viewModel: detailVM)
-        navigationController?.pushViewController(vc, animated: true)
+        viewModel.didSelectRow(at: indexPath)
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {

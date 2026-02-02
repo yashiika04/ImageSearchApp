@@ -21,7 +21,7 @@ final class ImageLoader: ImageLoaderProtocol{
     private var runningTask = [URL: URLSessionDataTask]()
     private let queue = DispatchQueue(label: "com.image.loader.queue", attributes: .concurrent)
     
-    private init(){}
+    init(){}
     
     func loadImage(from url: URL, completion: @escaping (UIImage?, URL)->Void){
         //cells and view models never touch url session directly

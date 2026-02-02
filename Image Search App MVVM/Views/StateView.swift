@@ -43,6 +43,8 @@ class StateView: UIView, StateViewProtocol{
     
     var onActionTapped: ((StateViewAction)->Void)?
     
+    
+    //MARK: - life cycle
     override init(frame: CGRect){
         super.init(frame: frame)
         setupUI()
@@ -53,6 +55,7 @@ class StateView: UIView, StateViewProtocol{
         fatalError("no storyboard implemetnation")
     }
     
+    //MRK: - Setup
     private func setupUI(){
         backgroundColor = UIColor.systemBackground.withAlphaComponent(0.95)
         isHidden = true

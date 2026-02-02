@@ -36,6 +36,7 @@ class LargeImageViewController: UIViewController {
         return spinner
     }()
     
+    // MARK: - Life cycle
     init(viewModel: LargeImageViewModelProtocol){
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -52,6 +53,7 @@ class LargeImageViewController: UIViewController {
         bindViewModel()
     }
     
+    //MARK: - setup
     private func setupUI(){
         view.backgroundColor = .systemBackground
         
@@ -82,6 +84,7 @@ class LargeImageViewController: UIViewController {
         
     }
     
+    // MARK: - Bind Function
     private func bindViewModel(){
         descriptionLabel.text = viewModel.descriptionText
         likesLabel.text = viewModel.likeText

@@ -26,11 +26,16 @@ protocol ImageListViewModelProtocol: AnyObject{
     func numberOfRows() -> Int
     func getImageInfo(at index: Int) -> ImageInfo
     func getCellVM(at index: Int) -> CustomCellViewModel
+    
+    func didSelectRow(at indexPath: IndexPath)
+    
+    var imageLoader: ImageLoaderProtocol { get }
 }
+
 
 class ImageListViewModel: ImageListViewModelProtocol {
     
-    private var imageLoader: ImageLoaderProtocol
+    var imageLoader: ImageLoaderProtocol
     private var imageListLoader: ImageListLoaderProtocol
     
     private var imageData: [ImageInfo] = []
@@ -43,7 +48,15 @@ class ImageListViewModel: ImageListViewModelProtocol {
     
     var onStateChanged: ((RequestState)->Void)?
     
-    init(imageLoader: ImageLoaderProtocol = ImageLoader.shared, imageListLoader: ImageListLoaderProtocol = ImageListLoader()){
+    private let coordinator: AppCoordinator
+    
+    // MARK: - Life cycle
+    init(
+        imageLoader: ImageLoaderProtocol = ImageLoader.shared,
+        imageListLoader: ImageListLoaderProtocol = ImageListLoader(),
+        coordinator: AppCoordinator
+    ){
+        self.coordinator = coordinator
         self.imageLoader = imageLoader
         self.imageListLoader = imageListLoader
     }
@@ -124,6 +137,11 @@ class ImageListViewModel: ImageListViewModelProtocol {
     
     func getImageInfo(at index: Int) -> ImageInfo {
         return imageData[index]
+    }
+
+    func didSelectRow(at indexPath: IndexPath) {
+        let imagInfo = getImageInfo(at: indexPath.row)
+        self.coordinator.showImagePreviewVC(for: imagInfo)
     }
 
     
